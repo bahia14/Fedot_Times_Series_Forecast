@@ -4,12 +4,12 @@ import os
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error as mse
 
-from core.composer.chain import Chain
+from core.chain.chain import Chain
 from core.composer.gp_composer.fixed_structure_composer import FixedStructureComposer
 from core.composer.gp_composer.gp_composer import GPComposerRequirements
-from core.composer.node import PrimaryNode, SecondaryNode
+from core.chain.node import ModelNode
 from core.composer.visualisation import ComposerVisualiser
-from core.models.data import InputData, OutputData
+from core.data.data import InputData, OutputData
 from core.repository.dataset_types import DataTypesEnum
 from core.repository.quality_metrics_repository import MetricsRepository, RegressionMetricsEnum
 from core.repository.tasks import Task, TaskTypesEnum, TsForecastingParams
@@ -18,14 +18,14 @@ from core.utils import project_root
 
 def get_composite_lstm_chain():
     chain = Chain()
-    node_trend = PrimaryNode('trend_data_model')
+    node_trend = ModelNode('trend_data_model')
     node_trend.labels = ["fixed"]
-    node_lstm_trend = SecondaryNode('linear', nodes_from=[node_trend])
+    node_lstm_trend = ModelNode('linear', nodes_from=[node_trend])
     node_trend.labels = ["fixed"]
-    node_residual = PrimaryNode('residual_data_model')
-    node_ridge_residual = SecondaryNode('linear', nodes_from=[node_residual])
+    node_residual = ModelNode('residual_data_model')
+    node_ridge_residual = ModelNode('linear', nodes_from=[node_residual])
 
-    node_final = SecondaryNode('additive_data_model',
+    node_final = ModelNode('additive_data_model',
                                nodes_from=[node_ridge_residual, node_lstm_trend])
     node_final.labels = ["fixed"]
     chain.add_node(node_final)

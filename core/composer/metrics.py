@@ -4,8 +4,8 @@ from abc import abstractmethod
 import numpy as np
 from sklearn.metrics import f1_score, mean_squared_error, roc_auc_score
 
-from core.composer.chain import Chain
-from core.models.data import InputData, OutputData
+from core.chain.chain import Chain
+from core.data.data import InputData, OutputData
 
 
 def from_maximised_metric(metric_func):

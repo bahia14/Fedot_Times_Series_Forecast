@@ -6,14 +6,14 @@ from typing import (
     Optional,
 )
 
-from core.chain_validation import validate
-from core.composer.chain import Chain, SharedChain
+from core.chain.chain_validation import validate
+from core.chain.chain import Chain, SharedChain
 from core.composer.composer import Composer, ComposerRequirements
-from core.composer.node import PrimaryNode, SecondaryNode
+from core.chain.node import ModelNode
 from core.composer.optimisers.gp_optimiser import GPChainOptimiser, GPChainOptimiserParameters
 from core.composer.visualisation import ComposerVisualiser
 from core.composer.write_history import write_composer_history_to_csv
-from core.models.data import InputData, train_test_data_setup
+from core.data.data import InputData, train_test_data_setup
 
 
 @dataclass
@@ -42,8 +42,8 @@ class GPComposer(Composer):
 
         optimiser = GPChainOptimiser(initial_chain=initial_chain,
                                      requirements=composer_requirements,
-                                     primary_node_func=PrimaryNode,
-                                     secondary_node_func=SecondaryNode, chain_class=Chain,
+                                     primary_node_func=ModelNode,
+                                     secondary_node_func=ModelNode, chain_class=Chain,
                                      parameters=optimiser_parameters)
 
         best_chain, self.history = optimiser.optimise(metric_function_for_nodes)

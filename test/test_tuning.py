@@ -6,9 +6,9 @@ import pytest
 from sklearn.metrics import mean_squared_error as mse, roc_auc_score as roc_auc
 
 from benchmark.benchmark_utils import get_scoring_case_data_paths
-from core.models.data import InputData, train_test_data_setup
+from core.data.data import InputData, train_test_data_setup
 from core.models.model import Model
-from core.models.preprocessing import Scaling
+from core.data.preprocessing import Scaling
 from core.models.tuners import get_random_params
 from core.repository.tasks import Task, TaskTypesEnum
 from test.test_autoregression import get_synthetic_ts_data
@@ -45,14 +45,14 @@ def test_knn_classification_tune_correct(data_fixture, request):
     data.features = Scaling().fit(data.features).apply(data.features)
     train_data, test_data = train_test_data_setup(data=data)
 
-    knn = Model(model_type='knn')
+    knn = Model(id='knn')
     model, _ = knn.fit(data=train_data)
     test_predicted = knn.predict(fitted_model=model, data=test_data)
 
     roc_on_test = roc_auc(y_true=test_data.target,
                           y_score=test_predicted)
 
-    knn_for_tune = Model(model_type='knn')
+    knn_for_tune = Model(id='knn')
     model, _ = knn_for_tune.fine_tune(data=train_data, iterations=10, max_lead_time=timedelta(minutes=1))
 
     test_predicted_tuned = knn_for_tune.predict(fitted_model=model, data=test_data)
@@ -67,7 +67,7 @@ def test_arima_tune_correct():
     data = get_synthetic_ts_data()
     train_data, test_data = train_test_data_setup(data=data)
 
-    arima_for_tune = Model(model_type='arima')
+    arima_for_tune = Model(id='arima')
     model, _ = arima_for_tune.fine_tune(data=train_data, iterations=5, max_lead_time=timedelta(minutes=0.1))
 
     test_predicted_tuned = arima_for_tune.predict(fitted_model=model, data=test_data)
@@ -86,7 +86,7 @@ def test_rf_class_tune_correct(data_fixture, request):
     data.features = Scaling().fit(data.features).apply(data.features)
     train_data, test_data = train_test_data_setup(data=data)
 
-    rf = Model(model_type='rf')
+    rf = Model(id='rf')
 
     model, _ = rf.fit(train_data)
     test_predicted = rf.predict(fitted_model=model, data=test_data)
@@ -112,7 +112,7 @@ def test_scoring_logreg_tune_correct(data_fixture, request):
     train_data.features = Scaling().fit(train_data.features).apply(train_data.features)
     test_data.features = Scaling().fit(test_data.features).apply(test_data.features)
 
-    logreg = Model(model_type='logit')
+    logreg = Model(id='logit')
 
     model, _ = logreg.fit(train_data)
     test_predicted = logreg.predict(fitted_model=model, data=test_data)
@@ -120,7 +120,7 @@ def test_scoring_logreg_tune_correct(data_fixture, request):
     test_roc_auc = roc_auc(y_true=test_data.target,
                            y_score=test_predicted)
 
-    logreg_for_tune = Model(model_type='logit')
+    logreg_for_tune = Model(id='logit')
 
     model_tuned, _ = logreg_for_tune.fine_tune(train_data, iterations=50, max_lead_time=timedelta(minutes=0.1))
     test_predicted_tuned = logreg_for_tune.predict(fitted_model=model_tuned, data=test_data)
@@ -146,38 +146,16 @@ def test_get_random_params_varied_length():
 
 
 @pytest.mark.parametrize('data_fixture', ['classification_dataset'])
-def test_max_lead_time_in_tune_process(data_fixture, request):
-    data = request.getfixturevalue(data_fixture)
-    data.features = Scaling().fit(data.features).apply(data.features)
-    train_data, test_data = train_test_data_setup(data=data)
-
-    start = datetime.now()
-
-    knn_for_tune = Model(model_type='knn')
-    model, _ = knn_for_tune.fine_tune(data=train_data, max_lead_time=timedelta(minutes=0.05), iterations=100)
-    test_predicted_tuned = knn_for_tune.predict(fitted_model=model, data=test_data)
-
-    roc_on_test_tuned = roc_auc(y_true=test_data.target,
-                                y_score=test_predicted_tuned)
-    roc_threshold = 0.6
-
-    spent_time = (datetime.now() - start).seconds
-
-    assert roc_on_test_tuned > roc_threshold
-    assert spent_time == 3
-
-
-@pytest.mark.parametrize('data_fixture', ['classification_dataset'])
 def test_classification_manual_tuning_correct(data_fixture, request):
     data = request.getfixturevalue(data_fixture)
     data.features = Scaling().fit(data.features).apply(data.features)
     train_data, test_data = train_test_data_setup(data=data)
 
-    knn = Model(model_type='knn')
+    knn = Model(id='knn')
     model, _ = knn.fit(data=train_data)
     test_predicted = knn.predict(fitted_model=model, data=test_data)
 
-    knn_for_tune = Model(model_type='knn')
+    knn_for_tune = Model(id='knn')
     knn_for_tune.params = {'n_neighbors': 1}
     model, _ = knn_for_tune.fit(data=train_data)
 
@@ -192,11 +170,11 @@ def test_pca_manual_tuning_correct(data_fixture, request):
     data.features = Scaling().fit(data.features).apply(data.features)
     train_data, test_data = train_test_data_setup(data=data)
 
-    pca = Model(model_type='pca_data_model')
+    pca = Model(id='pca_data_model')
     model, _ = pca.fit(data=train_data)
     test_predicted = pca.predict(fitted_model=model, data=test_data)
 
-    pca_for_tune = Model(model_type='pca_data_model')
+    pca_for_tune = Model(id='pca_data_model')
 
     pca_for_tune.params = {'svd_solver': 'randomized',
                            'iterated_power': 'auto',

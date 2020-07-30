@@ -7,13 +7,13 @@ import pandas as pd
 import pytest
 from sklearn.metrics import roc_auc_score as roc_auc
 
-from core.composer.chain import Chain
+from core.chain.chain import Chain
 from core.composer.composer import ComposerRequirements, DummyChainTypeEnum, DummyComposer
 from core.composer.gp_composer.fixed_structure_composer import FixedStructureComposer
 from core.composer.gp_composer.gp_composer import GPComposer, GPComposerRequirements
-from core.composer.node import PrimaryNode, SecondaryNode
+from core.chain.node import ModelNode
 from core.composer.random_composer import RandomSearchComposer
-from core.models.data import InputData
+from core.data.data import InputData
 from core.repository.dataset_types import DataTypesEnum
 from core.repository.model_types_repository import ModelTypesRepository
 from core.repository.quality_metrics_repository import ClassificationMetricsEnum, MetricsRepository
@@ -53,9 +53,9 @@ def test_dummy_composer_hierarchical_chain_build_correct():
                                        metrics=None)
 
     assert len(new_chain.nodes) == 3
-    assert isinstance(new_chain.nodes[0], PrimaryNode)
-    assert isinstance(new_chain.nodes[1], PrimaryNode)
-    assert isinstance(new_chain.nodes[2], SecondaryNode)
+    assert isinstance(new_chain.nodes[0], ModelNode)
+    assert isinstance(new_chain.nodes[1], ModelNode)
+    assert isinstance(new_chain.nodes[2], ModelNode)
     assert new_chain.nodes[2].nodes_from[0] is new_chain.nodes[0]
     assert new_chain.nodes[2].nodes_from[1] is new_chain.nodes[1]
     assert new_chain.nodes[1].nodes_from is None
@@ -77,9 +77,9 @@ def test_dummy_composer_flat_chain_build_correct():
                                        metrics=None)
 
     assert len(new_chain.nodes) == 3
-    assert isinstance(new_chain.nodes[0], PrimaryNode)
-    assert isinstance(new_chain.nodes[1], SecondaryNode)
-    assert isinstance(new_chain.nodes[2], SecondaryNode)
+    assert isinstance(new_chain.nodes[0], ModelNode)
+    assert isinstance(new_chain.nodes[1], ModelNode)
+    assert isinstance(new_chain.nodes[2], ModelNode)
     assert new_chain.nodes[1].nodes_from[0] is new_chain.nodes[0]
     assert new_chain.nodes[2].nodes_from[0] is new_chain.nodes[1]
     assert new_chain.nodes[0].nodes_from is None
@@ -183,10 +183,10 @@ def test_gp_composer_build_chain_correct(data_fixture, request):
 
 def baseline_chain():
     chain = Chain()
-    last_node = SecondaryNode(model_type='xgboost',
+    last_node = ModelNode(model_type='xgboost',
                                              nodes_from=[])
     for requirement_model in ['knn', 'logit']:
-        new_node = PrimaryNode(requirement_model)
+        new_node = ModelNode(requirement_model)
         chain.add_node(new_node)
         last_node.nodes_from.append(new_node)
     chain.add_node(last_node)

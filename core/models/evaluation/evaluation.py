@@ -25,7 +25,7 @@ from sklearn.svm import LinearSVR as SklearnSVR
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from xgboost import XGBClassifier, XGBRegressor
 
-from core.models.data import InputData, OutputData
+from core.data.data import InputData, OutputData
 from core.models.evaluation.custom_models.models import CustomSVC
 from core.models.evaluation.hyperparams import params_range_by_model
 from core.models.tuners import SklearnCustomRandomTuner, SklearnTuner

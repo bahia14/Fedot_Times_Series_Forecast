@@ -3,9 +3,9 @@ import os
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error as mse
 
-from core.composer.chain import Chain
-from core.composer.node import PrimaryNode, SecondaryNode
-from core.models.data import InputData, OutputData
+from core.chain.chain import Chain
+from core.chain.node import ModelNode
+from core.data.data import InputData, OutputData
 from core.repository.dataset_types import DataTypesEnum
 from core.repository.tasks import Task, TaskTypesEnum, TsForecastingParams
 from core.utils import project_root
@@ -13,13 +13,13 @@ from core.utils import project_root
 
 def get_composite_lstm_chain():
     chain = Chain()
-    node_trend = PrimaryNode('trend_data_model')
-    node_lstm_trend = SecondaryNode('lasso', nodes_from=[node_trend])
+    node_trend = ModelNode('trend_data_model')
+    node_lstm_trend = ModelNode('lasso', nodes_from=[node_trend])
 
-    node_residual = PrimaryNode('residual_data_model')
-    node_ridge_residual = SecondaryNode('ridge', nodes_from=[node_residual])
+    node_residual = ModelNode('residual_data_model')
+    node_ridge_residual = ModelNode('ridge', nodes_from=[node_residual])
 
-    node_final = SecondaryNode('additive_data_model',
+    node_final = ModelNode('additive_data_model',
                                nodes_from=[node_ridge_residual, node_lstm_trend])
     chain.add_node(node_final)
     return chain
@@ -77,11 +77,11 @@ def run_metocean_forecasting_problem(train_file_path, test_file_path,
     chain = get_composite_lstm_chain()
 
     chain_simple = Chain()
-    node_single = PrimaryNode('ridge')
+    node_single = ModelNode('ridge')
     chain_simple.add_node(node_single)
 
     chain_lstm = Chain()
-    node_lstm = PrimaryNode('lstm')
+    node_lstm = ModelNode('lstm')
     chain_lstm.add_node(node_lstm)
 
     chain.fit(input_data=dataset_to_train, verbose=False)

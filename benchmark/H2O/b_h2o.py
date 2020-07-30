@@ -8,7 +8,7 @@ import os
 import h2o
 
 from benchmark.benchmark_utils import (get_h2o_connect_config, get_models_hyperparameters)
-from core.models.data import InputData
+from core.data.data import InputData
 from core.models.evaluation.automl_eval import fit_h2o, predict_h2o
 
 CURRENT_PATH = str(os.path.dirname(__file__))

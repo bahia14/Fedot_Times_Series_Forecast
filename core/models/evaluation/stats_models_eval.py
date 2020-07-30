@@ -5,7 +5,7 @@ import numpy as np
 from statsmodels.tsa.ar_model import AutoReg
 from statsmodels.tsa.arima_model import ARIMA
 
-from core.models.data import InputData, OutputData
+from core.data.data import InputData, OutputData
 from core.models.evaluation.evaluation import EvaluationStrategy
 from core.models.tuners import ForecastingCustomRandomTuner
 

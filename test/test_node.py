@@ -4,8 +4,8 @@ from sklearn.datasets import load_iris
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, classification_report
 
-from core.composer.node import PrimaryNode
-from core.models.data import InputData, train_test_data_setup
+from core.chain.node import ModelNode
+from core.data.data import InputData, train_test_data_setup
 from core.models.model import Model
 from core.repository.dataset_types import DataTypesEnum
 from core.repository.tasks import Task, TaskTypesEnum
@@ -33,12 +33,12 @@ def model_metrics_info(class_name, y_true, y_pred):
 
 def test_node_factory_log_reg_correct(data_setup):
     model_type = 'logit'
-    node = PrimaryNode(model_type=model_type)
+    node = ModelNode(model_type=model_type)
 
-    expected_model = Model(model_type=model_type).__class__
+    expected_model = Model(id=model_type).__class__
     actual_model = node.model.__class__
 
-    assert node.__class__ == PrimaryNode
+    assert node.__class__ == ModelNode
     assert expected_model == actual_model
 
 
@@ -51,8 +51,8 @@ def test_eval_strategy_logreg(data_setup):
     test_skl_model.fit(train.features, train.target)
     expected_result = test_skl_model.predict(test.features)
 
-    test_model_node = PrimaryNode(model_type='logit')
-    test_model_node.fit(input_data=train)
-    actual_result = test_model_node.predict(input_data=test)
+    test_model_node = ModelNode(model_type='logit')
+    test_model_node.fit_with_data(input_data=train)
+    actual_result = test_model_node.predict_with_data(input_data=test)
 
     assert len(actual_result.predict) == len(expected_result)

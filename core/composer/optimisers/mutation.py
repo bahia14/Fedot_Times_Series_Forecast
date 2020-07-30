@@ -4,7 +4,7 @@ from functools import partial
 from random import choice, randint, random
 from typing import (Any, Callable)
 
-from core.composer.chain import Chain, List
+from core.chain.chain import Chain, List
 from core.composer.constraint import constraint_function
 from core.composer.optimisers.gp_operators import node_depth, nodes_from_height, random_chain
 

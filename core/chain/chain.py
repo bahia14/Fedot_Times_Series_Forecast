@@ -5,8 +5,9 @@ from uuid import uuid4
 
 import networkx as nx
 
-from core.composer.node import (FittedModelCache, Node, PrimaryNode, SecondaryNode, SharedCache)
-from core.models.data import InputData
+from core.chain.cache import FittedModelCache, SharedCache
+from core.chain.node import DataNode, ModelNode, Node
+from core.data.data import InputData
 
 ERROR_PREFIX = 'Invalid chain configuration:'
 
@@ -14,6 +15,7 @@ ERROR_PREFIX = 'Invalid chain configuration:'
 class Chain:
     def __init__(self, nodes: Optional[Union[Node, List[Node]]] = None):
         self.nodes = []
+        self.data_source = []
         if nodes:
             if isinstance(nodes, list):
                 for node in nodes:
@@ -26,17 +28,40 @@ class Chain:
         print('Fit chain from scratch')
         self.fit(input_data, use_cache=False, verbose=verbose)
 
-    def fit(self, input_data: InputData, use_cache=True, verbose=False):
+    def fit(self, input_data: Union[InputData, dict],
+            use_cache=True, verbose=False):
         if not use_cache:
             self._clean_model_cache()
-        train_predicted = self.root_node.fit(input_data=input_data, verbose=verbose)
+
+        if not any([node.model.id == 'data_source' for node in self.nodes]):
+            if isinstance(input_data, InputData):
+                # if single data source not created yet
+                data_source = DataNode(input_data, 'data_source')
+                self.nodes.append(data_source)
+                for node in self.nodes:
+                    if not node.nodes_from and not isinstance(node, DataNode):
+                        node.nodes_from = [data_source]
+            else:
+                raise ValueError('No data source in chain')
+
+        train_predicted = self.root_node.fit(verbose=verbose)
 
         return train_predicted
 
-    def predict(self, input_data: InputData):
+    def predict(self, input_data: Union[InputData, dict]):
         if not self.is_all_cache_actual():
             raise Exception('Trained model cache is not actual or empty')
-        result = self.root_node.predict(input_data=input_data)
+
+        data_for_node = input_data
+        for node in self.nodes:
+            if node.model.id == 'data_source':
+                if isinstance(input_data, dict):
+                    data_for_node = input_data.get(node, None)
+                # fit data source
+                node.cache.clear()
+                node.fit_with_data(data_for_node)
+
+        result = self.root_node.predict()
         return result
 
     def fine_tune_primary_nodes(self, input_data: InputData, iterations: int = 30,
@@ -47,9 +72,9 @@ class Chain:
         if verbose:
             print('Start tuning of primary nodes')
 
-        all_primary_nodes = [node for node in self.nodes if isinstance(node, PrimaryNode)]
+        all_primary_nodes = [node for node in self.nodes if isinstance(node, ModelNode)]
         for node in all_primary_nodes:
-            node.fine_tune(input_data, max_lead_time=max_lead_time, iterations=iterations)
+            node.fine_tune(max_lead_time=max_lead_time, iterations=iterations)
 
         if verbose:
             print('End tuning')
@@ -109,7 +134,7 @@ class Chain:
         return all(cache_status)
 
     def node_childs(self, node) -> List[Optional[Node]]:
-        return [other_node for other_node in self.nodes if isinstance(other_node, SecondaryNode) and
+        return [other_node for other_node in self.nodes if isinstance(other_node, ModelNode) and
                 node in other_node.nodes_from]
 
     def _is_node_has_child(self, node) -> bool:
@@ -151,7 +176,7 @@ class Chain:
         def _depth_recursive(node):
             if node is None:
                 return 0
-            if isinstance(node, PrimaryNode):
+            if isinstance(node, ModelNode):
                 return 1
             else:
                 return 1 + max([_depth_recursive(next_node) for next_node in node.nodes_from])

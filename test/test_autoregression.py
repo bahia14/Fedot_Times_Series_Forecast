@@ -3,10 +3,10 @@ import pytest
 from sklearn.metrics import mean_squared_error as mse
 from statsmodels.tsa.arima_process import ArmaProcess
 
-from core.composer.chain import Chain
+from core.chain.chain import Chain
 from core.composer.composer import ComposerRequirements, \
     DummyChainTypeEnum, DummyComposer
-from core.models.data import InputData, train_test_data_setup
+from core.data.data import InputData, train_test_data_setup
 from core.repository.dataset_types import DataTypesEnum
 from core.repository.quality_metrics_repository import \
     MetricsRepository, RegressionMetricsEnum

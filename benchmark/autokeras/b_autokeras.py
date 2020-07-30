@@ -1,7 +1,7 @@
 import autokeras as ak
 
 from benchmark.benchmark_utils import get_models_hyperparameters
-from core.models.data import InputData
+from core.data.data import InputData
 from core.repository.tasks import TaskTypesEnum
 
 

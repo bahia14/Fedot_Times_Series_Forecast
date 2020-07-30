@@ -183,7 +183,7 @@
 	"kmeans": {
 	  "meta": "sklearn_clust"
 	},
-	"direct_data_model": {
+	"data_source": {
 	  "meta": "data_model"
 	},
 	"diff_data_model": {

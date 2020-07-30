@@ -1,21 +1,21 @@
 import pytest
 
-from core.chain_validation import (has_correct_model_positions, has_no_cycle, has_no_isolated_components,
-                                   has_no_isolated_nodes, has_no_self_cycled_nodes, has_primary_nodes, validate)
-from core.composer.chain import Chain
-from core.composer.node import PrimaryNode, SecondaryNode
+from core.chain.chain_validation import (has_correct_model_positions, has_no_cycle, has_no_isolated_components,
+                                         has_no_isolated_nodes, has_no_self_cycled_nodes, has_primary_nodes, validate)
+from core.chain.chain import Chain
+from core.chain.node import ModelNode
 from core.repository.tasks import Task, TaskTypesEnum
 
 ERROR_PREFIX = 'Invalid chain configuration:'
 
 
 def valid_chain():
-    first = PrimaryNode(model_type='logit')
-    second = SecondaryNode(model_type='logit',
+    first = ModelNode(model_type='logit')
+    second = ModelNode(model_type='logit',
                            nodes_from=[first])
-    third = SecondaryNode(model_type='logit',
+    third = ModelNode(model_type='logit',
                           nodes_from=[second])
-    last = SecondaryNode(model_type='logit',
+    last = ModelNode(model_type='logit',
                          nodes_from=[third])
 
     chain = Chain()
@@ -26,10 +26,10 @@ def valid_chain():
 
 
 def chain_with_cycle():
-    first = PrimaryNode(model_type='logit')
-    second = SecondaryNode(model_type='logit',
+    first = ModelNode(model_type='logit')
+    second = ModelNode(model_type='logit',
                            nodes_from=[first])
-    third = SecondaryNode(model_type='logit',
+    third = ModelNode(model_type='logit',
                           nodes_from=[second, first])
     second.nodes_from.append(third)
     chain = Chain()
@@ -40,12 +40,12 @@ def chain_with_cycle():
 
 
 def chain_with_isolated_nodes():
-    first = PrimaryNode(model_type='logit')
-    second = SecondaryNode(model_type='logit',
+    first = ModelNode(model_type='logit')
+    second = ModelNode(model_type='logit',
                            nodes_from=[first])
-    third = SecondaryNode(model_type='logit',
+    third = ModelNode(model_type='logit',
                           nodes_from=[second])
-    isolated = SecondaryNode(model_type='logit',
+    isolated = ModelNode(model_type='logit',
                              nodes_from=[])
     chain = Chain()
 
@@ -56,10 +56,10 @@ def chain_with_isolated_nodes():
 
 
 def chain_with_multiple_roots():
-    first = PrimaryNode(model_type='logit')
-    root_first = SecondaryNode(model_type='logit',
+    first = ModelNode(model_type='logit')
+    root_first = ModelNode(model_type='logit',
                                nodes_from=[first])
-    root_second = SecondaryNode(model_type='logit',
+    root_second = ModelNode(model_type='logit',
                                 nodes_from=[first])
     chain = Chain()
 
@@ -70,9 +70,9 @@ def chain_with_multiple_roots():
 
 
 def chain_with_secondary_nodes_only():
-    first = SecondaryNode(model_type='logit',
+    first = ModelNode(model_type='logit',
                           nodes_from=[])
-    second = SecondaryNode(model_type='logit',
+    second = ModelNode(model_type='logit',
                            nodes_from=[first])
     chain = Chain()
     chain.add_node(first)
@@ -82,8 +82,8 @@ def chain_with_secondary_nodes_only():
 
 
 def chain_with_self_cycle():
-    first = PrimaryNode(model_type='logit')
-    second = SecondaryNode(model_type='logit',
+    first = ModelNode(model_type='logit')
+    second = ModelNode(model_type='logit',
                            nodes_from=[first])
     second.nodes_from.append(second)
 
@@ -95,12 +95,12 @@ def chain_with_self_cycle():
 
 
 def chain_with_isolated_components():
-    first = PrimaryNode(model_type='logit')
-    second = SecondaryNode(model_type='logit',
+    first = ModelNode(model_type='logit')
+    second = ModelNode(model_type='logit',
                            nodes_from=[first])
-    third = SecondaryNode(model_type='logit',
+    third = ModelNode(model_type='logit',
                           nodes_from=[])
-    fourth = SecondaryNode(model_type='logit',
+    fourth = ModelNode(model_type='logit',
                            nodes_from=[third])
 
     chain = Chain()
@@ -111,9 +111,9 @@ def chain_with_isolated_components():
 
 
 def chain_with_incorrect_root_model():
-    first = PrimaryNode(model_type='logit')
-    second = PrimaryNode(model_type='logit')
-    final = SecondaryNode(model_type='direct_data_model',
+    first = ModelNode(model_type='logit')
+    second = ModelNode(model_type='logit')
+    final = ModelNode(model_type='data_source',
                           nodes_from=[first, second])
 
     chain = Chain(final)
@@ -122,9 +122,9 @@ def chain_with_incorrect_root_model():
 
 
 def chain_with_primary_composition_model():
-    first = PrimaryNode(model_type='additive_data_model')
-    second = PrimaryNode(model_type='residual_data_model')
-    final = SecondaryNode(model_type='additive_data_model',
+    first = ModelNode(model_type='additive_data_model')
+    second = ModelNode(model_type='residual_data_model')
+    final = ModelNode(model_type='additive_data_model',
                           nodes_from=[first, second])
 
     chain = Chain(final)
@@ -133,9 +133,9 @@ def chain_with_primary_composition_model():
 
 
 def chain_with_incorrect_task_type():
-    first = PrimaryNode(model_type='linear')
-    second = PrimaryNode(model_type='linear')
-    final = SecondaryNode(model_type='kmeans',
+    first = ModelNode(model_type='linear')
+    second = ModelNode(model_type='linear')
+    final = ModelNode(model_type='kmeans',
                           nodes_from=[first, second])
 
     chain = Chain(final)
@@ -144,9 +144,9 @@ def chain_with_incorrect_task_type():
 
 
 def chain_with_incorrect_decomposition_structure():
-    first = PrimaryNode(model_type='trend_data_model')
-    second = PrimaryNode(model_type='residual_data_model')
-    final = SecondaryNode(model_type='linear',
+    first = ModelNode(model_type='trend_data_model')
+    second = ModelNode(model_type='residual_data_model')
+    final = ModelNode(model_type='linear',
                           nodes_from=[first, second])
 
     chain = Chain(final)
@@ -155,9 +155,9 @@ def chain_with_incorrect_decomposition_structure():
 
 
 def chain_with_correct_decomposition_structure():
-    first = PrimaryNode(model_type='trend_data_model')
-    second = PrimaryNode(model_type='residual_data_model')
-    final = SecondaryNode(model_type='additive_data_model',
+    first = ModelNode(model_type='trend_data_model')
+    second = ModelNode(model_type='residual_data_model')
+    final = ModelNode(model_type='additive_data_model',
                           nodes_from=[first, second])
 
     chain = Chain(final)

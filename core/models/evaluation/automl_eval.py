@@ -8,7 +8,7 @@ from h2o import H2OFrame
 from h2o.automl import H2OAutoML
 from tpot import TPOTClassifier, TPOTRegressor
 
-from core.models.data import InputData
+from core.data.data import InputData
 from core.models.evaluation.evaluation import EvaluationStrategy
 from core.repository.tasks import TaskTypesEnum
 

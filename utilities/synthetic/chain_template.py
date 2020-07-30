@@ -6,13 +6,13 @@ from typing import List
 
 import numpy as np
 
-from core.composer.chain import Chain
-from core.composer.node import CachedState
-from core.composer.node import Node
-from core.composer.node import PrimaryNode, SecondaryNode, FittedModelCache
+from core.chain.chain import Chain
+from core.chain.node import CachedState
+from core.chain.node import Node
+from core.chain.node import ModelNode, FittedModelCache
 from core.models.model import InputData
 from core.models.model import Model
-from core.models.preprocessing import Normalization
+from core.data.preprocessing import Normalization
 from core.repository.tasks import Task, TaskTypesEnum
 from utilities.synthetic.data import classification_dataset as synthetic_dataset
 from utilities.synthetic.data import gauss_quantiles_dataset as gauss_quantiles
@@ -154,7 +154,7 @@ def show_chain_template(models_by_level):
 def fit_template(chain_template, classes, with_gaussian=False, skip_fit=False):
     templates_by_models = []
     for model_template in itertools.chain.from_iterable(chain_template):
-        model_instance = Model(model_type=model_template.model_type)
+        model_instance = Model(id=model_template.model_type)
         model_template.model_instance = model_instance
         templates_by_models.append((model_template, model_instance))
     if skip_fit:
@@ -200,9 +200,9 @@ def real_chain(chain_template, with_cache=True):
     for level in range(0, len(chain_template)):
         for template in chain_template[level]:
             if len(template.parents) == 0:
-                node = PrimaryNode(model_type=template.model_type)
+                node = ModelNode(model_type=template.model_type)
             else:
-                node = SecondaryNode(nodes_from=real_parents(nodes_by_templates,
+                node = ModelNode(nodes_from=real_parents(nodes_by_templates,
                                                              template),
                                      model_type=template.model_type)
             node.model = template.model_instance

@@ -2,9 +2,9 @@ import numpy as np
 import pytest
 from sklearn.datasets import load_breast_cancer
 
-from core.composer.chain import Chain
-from core.composer.node import PrimaryNode, SecondaryNode
-from core.models.data import InputData, split_train_test
+from core.chain.chain import Chain
+from core.chain.node import ModelNode
+from core.data.data import InputData, split_train_test
 from core.repository.dataset_types import DataTypesEnum
 from core.repository.quality_metrics_repository import \
     (ClassificationMetricsEnum,
@@ -34,10 +34,10 @@ def data_setup():
 
 
 def default_valid_chain():
-    first = PrimaryNode(model_type='logit')
-    second = SecondaryNode(model_type='logit', nodes_from=[first])
-    third = SecondaryNode(model_type='logit', nodes_from=[first])
-    final = SecondaryNode(model_type='logit', nodes_from=[second, third])
+    first = ModelNode(model_type='logit')
+    second = ModelNode(model_type='logit', nodes_from=[first])
+    third = ModelNode(model_type='logit', nodes_from=[first])
+    final = ModelNode(model_type='logit', nodes_from=[second, third])
 
     chain = Chain(final)
 

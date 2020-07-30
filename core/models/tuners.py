@@ -8,7 +8,7 @@ from skopt import BayesSearchCV
 
 from core.composer.timer import TunerTimer
 import operator
-from core.models.data import InputData, train_test_data_setup
+from core.data.data import InputData, train_test_data_setup
 
 
 class Tuner:

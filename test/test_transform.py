@@ -1,7 +1,7 @@
 import numpy as np
 
-from core.models.data import InputData
-from core.models.transformation import direct, \
+from core.data.data import InputData
+from core.data.transformation import direct, \
     ts_lagged_3d_to_lagged_table, \
     ts_lagged_3d_to_ts, ts_lagged_to_ts, \
     ts_to_lagged_3d, ts_to_lagged_table

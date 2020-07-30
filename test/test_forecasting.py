@@ -2,9 +2,9 @@ import numpy as np
 from sklearn.metrics import mean_squared_error as mse
 from statsmodels.tsa.arima_process import ArmaProcess
 
-from core.composer.chain import Chain
-from core.composer.node import PrimaryNode, SecondaryNode
-from core.models.data import InputData, train_test_data_setup
+from core.chain.chain import Chain
+from core.chain.node import ModelNode
+from core.data.data import InputData, train_test_data_setup
 from core.repository.dataset_types import DataTypesEnum
 from core.repository.tasks import Task, TaskTypesEnum, TsForecastingParams
 
@@ -37,19 +37,19 @@ def get_rmse_value(chain: Chain, train_data: InputData, test_data: InputData) ->
 
 def get_decomposed_chain(model_trend='lstm', model_residual='ridge'):
     chain = Chain()
-    node_trend = PrimaryNode('trend_data_model')
-    node_first_trend = SecondaryNode('lstm',
+    node_trend = ModelNode('trend_data_model')
+    node_first_trend = ModelNode('lstm',
                                      nodes_from=[node_trend])
 
     if model_trend == 'lstm':
         # decrease the number of epochs to fit
         node_first_trend.model.params = {'epochs': 1}
 
-    node_residual = PrimaryNode('residual_data_model')
-    node_model_residual = SecondaryNode(model_residual,
+    node_residual = ModelNode('residual_data_model')
+    node_model_residual = ModelNode(model_residual,
                                         nodes_from=[node_residual])
 
-    node_final = SecondaryNode('additive_data_model',
+    node_final = ModelNode('additive_data_model',
                                nodes_from=[node_model_residual,
                                            node_first_trend])
     chain.add_node(node_final)
@@ -60,7 +60,7 @@ def test_arima_chain_fit_correct():
     data = get_synthetic_ts_data()
 
     chain = Chain()
-    node_arima = PrimaryNode('arima')
+    node_arima = ModelNode('arima')
     chain.add_node(node_arima)
 
     train_data, test_data = train_test_data_setup(data)
@@ -77,7 +77,7 @@ def test_regression_chain_fit_correct():
     data = get_synthetic_ts_data()
 
     chain = Chain()
-    node_rfr = PrimaryNode('rfr')
+    node_rfr = ModelNode('rfr')
     chain.add_node(node_rfr)
 
     train_data, test_data = train_test_data_setup(data)

@@ -1,6 +1,6 @@
 import xgboost as xgb
 
-from core.models.data import InputData
+from core.data.data import InputData
 from core.repository.tasks import TaskTypesEnum
 
 

@@ -1,8 +1,8 @@
-from dataclasses import dataclass
 from typing import List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
+from dataclasses import dataclass
 from sklearn.model_selection import train_test_split
 
 from core.repository.dataset_types import DataTypesEnum
@@ -37,6 +37,7 @@ class Data:
 @dataclass
 class InputData(Data):
     target: np.array = None
+    is_main_dataset: bool = True
 
     @property
     def num_classes(self) -> Optional[int]:

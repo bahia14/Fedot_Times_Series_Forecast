@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from core.models.data import InputData
+from core.data.data import InputData
 from core.repository.dataset_types import DataTypesEnum
 from core.repository.tasks import Task, TaskTypesEnum
 from utilities.synthetic.chain import \

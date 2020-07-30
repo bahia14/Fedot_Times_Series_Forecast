@@ -4,8 +4,8 @@ import networkx as nx
 from networkx.algorithms.cycles import simple_cycles
 from networkx.algorithms.isolate import isolates
 
-from core.composer.chain import Chain, as_nx_graph
-from core.composer.node import PrimaryNode, SecondaryNode
+from core.chain.chain import Chain, as_nx_graph
+from core.chain.node import ModelNode
 from core.repository.tasks import Task
 
 ERROR_PREFIX = 'Invalid chain configuration:'
@@ -45,13 +45,13 @@ def has_no_isolated_nodes(chain: Chain):
 
 
 def has_primary_nodes(chain: Chain):
-    if not any(node for node in chain.nodes if isinstance(node, PrimaryNode)):
+    if not any(node for node in chain.nodes if isinstance(node, ModelNode)):
         raise ValueError(f'{ERROR_PREFIX} Chain does not have primary nodes')
     return True
 
 
 def has_no_self_cycled_nodes(chain: Chain):
-    if any([node for node in chain.nodes if isinstance(node, SecondaryNode) and node in node.nodes_from]):
+    if any([node for node in chain.nodes if isinstance(node, ModelNode) and node in node.nodes_from]):
         raise ValueError(f'{ERROR_PREFIX} Chain has self-cycled nodes')
     return True
 
@@ -76,7 +76,7 @@ def _is_data_merged(chain: Chain):
 
 def _is_primary_not_composition_datamodel(chain: Chain):
     is_primary_not_composition_datamodel = all(['composition' not in node.model_tags
-                                                for node in chain.nodes if isinstance(node, PrimaryNode)])
+                                                for node in chain.nodes if isinstance(node, ModelNode)])
     return is_primary_not_composition_datamodel
 
 

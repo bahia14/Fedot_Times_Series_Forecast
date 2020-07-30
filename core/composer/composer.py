@@ -4,9 +4,9 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import (Any, Callable, List, Optional)
 
-from core.composer.chain import Chain
-from core.composer.node import PrimaryNode, SecondaryNode
-from core.models.data import InputData
+from core.chain.chain import Chain
+from core.chain.node import ModelNode
+from core.data.data import InputData
 
 
 @dataclass
@@ -62,20 +62,20 @@ class DummyComposer(Composer):
 
         if self.dummy_chain_type == DummyChainTypeEnum.hierarchical:
             # (y1, y2) -> y
-            last_node = SecondaryNode(composer_requirements.secondary[0])
+            last_node = ModelNode(composer_requirements.secondary[0])
 
             for requirement_model in composer_requirements.primary:
-                new_node = PrimaryNode(requirement_model)
+                new_node = ModelNode(requirement_model)
                 new_chain.add_node(new_node)
                 last_node.nodes_from.append(new_node)
             new_chain.add_node(last_node)
         elif self.dummy_chain_type == DummyChainTypeEnum.flat:
             # (y1) -> (y2) -> y
-            first_node = PrimaryNode(composer_requirements.primary[0])
+            first_node = ModelNode(composer_requirements.primary[0])
             new_chain.add_node(first_node)
             prev_node = first_node
             for requirement_model in composer_requirements.secondary:
-                new_node = SecondaryNode(requirement_model)
+                new_node = ModelNode(requirement_model)
                 new_node.nodes_from = [prev_node]
                 prev_node = new_node
                 new_chain.add_node(new_node)

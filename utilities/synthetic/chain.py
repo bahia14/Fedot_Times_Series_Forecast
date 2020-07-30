@@ -1,7 +1,7 @@
 import random
 from typing import List
 
-from core.composer.chain import Chain
+from core.chain.chain import Chain
 from utilities.synthetic.chain_template import \
     (chain_template_balanced_tree, chain_template_random,
      fit_template, real_chain)

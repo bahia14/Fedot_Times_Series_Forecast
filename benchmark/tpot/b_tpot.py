@@ -3,7 +3,7 @@ import os
 import joblib
 
 from benchmark.benchmark_utils import get_models_hyperparameters
-from core.models.data import InputData
+from core.data.data import InputData
 from core.models.evaluation.automl_eval import fit_tpot, predict_tpot_class, predict_tpot_reg
 from core.repository.tasks import Task, TaskTypesEnum
 

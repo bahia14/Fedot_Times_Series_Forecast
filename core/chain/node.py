@@ -1,25 +1,25 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from collections import namedtuple
 from copy import copy
 from datetime import timedelta
 from typing import Callable, List, Optional
 
-from core.models.data import InputData, OutputData
+from core.chain.cache import FittedModelCache
+from core.data.data import InputData, OutputData
+from core.data.preprocessing import preprocessing_func_for_data
+from core.data.transformation import transformation_function_for_data
 from core.models.model import Model
-from core.models.preprocessing import preprocessing_func_for_data
-from core.models.transformation import transformation_function_for_data
 
 CachedState = namedtuple('CachedState', 'preprocessor model')
 
 
 class Node(ABC):
-
-    def __init__(self, nodes_from: Optional[List['Node']], model_type: str,
-                 manual_preprocessing_func: Optional[Callable] = None):
+    def __init__(self, nodes_from: Optional[List['Node']],
+                 model_type: str):
         self.nodes_from = nodes_from
-        self.model = Model(model_type=model_type)
+        self.model = Model(id=model_type)
         self.cache = FittedModelCache(self)
-        self.manual_preprocessing_func = manual_preprocessing_func
+        self.manual_preprocessing_func = None
 
     @property
     def descriptive_id(self):
@@ -75,7 +75,19 @@ class Node(ABC):
 
         return data, preprocessing_strategy
 
-    def fit(self, input_data: InputData, verbose=False) -> OutputData:
+    @abstractmethod
+    def fit(self, verbose: bool = False):
+        pass
+
+    @abstractmethod
+    def predict(self, verbose: bool = False):
+        pass
+
+    @abstractmethod
+    def fine_tune(self, max_lead_time: timedelta = timedelta(minutes=5), iterations: int = 30):
+        pass
+
+    def fit_with_data(self, input_data: InputData, verbose=False) -> OutputData:
         transformed = self._transform(input_data)
         preprocessed_data, preproc_strategy = self._preprocess(transformed)
 
@@ -95,7 +107,7 @@ class Node(ABC):
 
         return self.output_from_prediction(input_data, model_predict)
 
-    def predict(self, input_data: InputData, verbose=False) -> OutputData:
+    def predict_with_data(self, input_data: InputData, verbose=False) -> OutputData:
         transformed = self._transform(input_data)
         preprocessed_data, _ = self._preprocess(transformed)
 
@@ -107,8 +119,8 @@ class Node(ABC):
 
         return self.output_from_prediction(input_data, model_predict)
 
-    def fine_tune(self, input_data: InputData,
-                  max_lead_time: timedelta = timedelta(minutes=5), iterations: int = 30):
+    def fine_tune_with_data(self, input_data: InputData,
+                            max_lead_time: timedelta = timedelta(minutes=5), iterations: int = 30):
 
         transformed = self._transform(input_data)
         preprocessed_data, preproc_strategy = self._preprocess(transformed)
@@ -141,107 +153,67 @@ class Node(ABC):
         self.model.params = params
 
 
-class FittedModelCache:
-    def __init__(self, related_node: Node):
-        self._local_cached_models = {}
-        self._related_node_ref = related_node
+class DataNode(Node):
+    def __init__(self, input_data: InputData, model_type: Optional[str] = None):
+        if not model_type:
+            model_type = 'data_source'
+        super().__init__(nodes_from=None, model_type=model_type)
+        self.fit_with_data(input_data)
 
-    def append(self, fitted_model):
-        self._local_cached_models[self._related_node_ref.descriptive_id] = fitted_model
+    def fit(self, verbose: bool = False):
+        return self.cache.actual_cached_state.model
 
-    def import_from_other_cache(self, other_cache: 'FittedModelCache'):
-        for entry_key in other_cache._local_cached_models.keys():
-            self._local_cached_models[entry_key] = other_cache._local_cached_models[entry_key]
+    def predict(self, verbose: bool = False):
+        raise self.cache.actual_cached_state.model
 
-    def clear(self):
-        self._local_cached_models = {}
-
-    @property
-    def actual_cached_state(self):
-        found_model = self._local_cached_models.get(self._related_node_ref.descriptive_id, None)
-        return found_model
+    def fine_tune(self, max_lead_time: timedelta = timedelta(minutes=5),
+                  iterations: int = 30):
+        raise NotImplementedError()
 
 
-class SharedCache(FittedModelCache):
-    def __init__(self, related_node: Node, global_cached_models: dict):
-        super().__init__(related_node)
-        self._global_cached_models = global_cached_models
-
-    def append(self, fitted_model):
-        super().append(fitted_model)
-        if self._global_cached_models is not None:
-            self._global_cached_models[self._related_node_ref.descriptive_id] = fitted_model
-
-    @property
-    def actual_cached_state(self):
-        found_model = super().actual_cached_state
-
-        if not found_model and self._global_cached_models:
-            found_model = self._global_cached_models.get(self._related_node_ref.descriptive_id, None)
-        return found_model
-
-
-class PrimaryNode(Node):
-    def __init__(self, model_type: str, manual_preprocessing_func: Optional[Callable] = None):
-        super().__init__(nodes_from=None, model_type=model_type,
-                         manual_preprocessing_func=manual_preprocessing_func)
-
-    def fit(self, input_data: InputData, verbose=False) -> OutputData:
-        if verbose:
-            print(f'Trying to fit primary node with model: {self.model}')
-
-        return super().fit(input_data, verbose)
-
-    def predict(self, input_data: InputData, verbose=False) -> OutputData:
-        if verbose:
-            print(f'Predict in primary node by model: {self.model}')
-
-        return super().predict(input_data, verbose)
-
-
-class SecondaryNode(Node):
+class ModelNode(Node):
     def __init__(self, model_type: str, nodes_from: Optional[List['Node']] = None,
-                 manual_preprocessing_func: Optional[Callable] = None):
+                 manual_preprocessing_func: Optional[Callable] = None,
+                 local_target=None):
         nodes_from = [] if nodes_from is None else nodes_from
-        super().__init__(nodes_from=nodes_from, model_type=model_type,
-                         manual_preprocessing_func=manual_preprocessing_func)
+        super().__init__(nodes_from=nodes_from, model_type=model_type)
+        self.manual_preprocessing_func = manual_preprocessing_func
+        self.local_target = local_target
 
-    def fit(self, input_data: InputData, verbose=False) -> OutputData:
+    def fit(self, verbose=False) -> OutputData:
         if verbose:
-            print(f'Trying to fit secondary node with model: {self.model}')
+            print(f'Trying to fit node with model: {self.model}')
 
-        secondary_input = self._input_from_parents(input_data=input_data,
-                                                   parent_operation='fit',
-                                                   verbose=verbose)
-        return super().fit(input_data=secondary_input)
-
-    def predict(self, input_data: InputData, verbose=False) -> OutputData:
-        if verbose:
-            print(f'Obtain prediction in secondary node with model: {self.model}')
-
-        secondary_input = self._input_from_parents(input_data=input_data,
-                                                   parent_operation='predict',
+        secondary_input = self._input_from_parents(parent_operation='fit',
                                                    verbose=verbose)
 
-        return super().predict(input_data=secondary_input)
+        return super().fit_with_data(input_data=secondary_input)
 
-    def fine_tune(self, input_data: InputData,
+    def predict(self, verbose=False) -> OutputData:
+        if verbose:
+            print(f'Obtain prediction in node with model: {self.model}')
+
+        secondary_input = self._input_from_parents(parent_operation='predict',
+                                                   verbose=verbose)
+
+        return super().predict_with_data(input_data=secondary_input)
+
+    def fine_tune(self,
                   max_lead_time: timedelta = timedelta(minutes=5), iterations: int = 30,
                   verbose: bool = False):
         if verbose:
             print(f'Tune all parent nodes in secondary node with model: {self.model}')
 
-        secondary_input = self._input_from_parents(input_data=input_data,
-                                                   parent_operation='fine_tune',
+        secondary_input = self._input_from_parents(parent_operation='fine_tune',
                                                    max_tune_time=max_lead_time, verbose=verbose)
 
-        return super().fine_tune(input_data=secondary_input)
+        return super().predict_with_data(input_data=secondary_input)
 
     def _nodes_from_with_fixed_order(self):
         if self.nodes_from is not None:
             return sorted(self.nodes_from, key=lambda node: node.descriptive_id)
 
-    def _input_from_parents(self, input_data: InputData,
+    def _input_from_parents(self,
                             parent_operation: str,
                             max_tune_time: Optional[timedelta] = None,
                             verbose=False) -> InputData:
@@ -257,11 +229,15 @@ class SecondaryNode(Node):
             ['affects_target' in parent_node.model_tags for parent_node in parent_nodes]
         if any(are_prev_nodes_affect_target):
             # is the previous model is the model that changes target
-            parent_results, target = _combine_parents_that_affects_target(parent_nodes, input_data,
+            parent_results, target = _combine_parents_that_affects_target(parent_nodes,
                                                                           parent_operation)
         else:
-            parent_results, target = _combine_parents_simple(parent_nodes, input_data,
-                                                             parent_operation, max_tune_time)
+            parent_results, target = _combine_parents_simple(parent_nodes,
+                                                             parent_operation,
+                                                             max_tune_time)
+
+        if self.local_target:
+            target = self.local_target
 
         secondary_input = InputData.from_predictions(outputs=parent_results,
                                                      target=target)
@@ -270,15 +246,14 @@ class SecondaryNode(Node):
 
 
 def _combine_parents_that_affects_target(parent_nodes: List[Node],
-                                         input_data: InputData,
                                          parent_operation: str):
     if len(parent_nodes) > 1:
         raise NotImplementedError()
 
     if parent_operation == 'predict':
-        parent_result = parent_nodes[0].predict(input_data=input_data)
+        parent_result = parent_nodes[0].predict()
     elif parent_operation == 'fit' or parent_operation == 'fine_tune':
-        parent_result = parent_nodes[0].fit(input_data=input_data)
+        parent_result = parent_nodes[0].fit()
     else:
         raise NotImplementedError()
 
@@ -287,19 +262,17 @@ def _combine_parents_that_affects_target(parent_nodes: List[Node],
 
 
 def _combine_parents_simple(parent_nodes: List[Node],
-                            input_data: InputData,
                             parent_operation: str,
                             max_tune_time: Optional[timedelta]):
-    target = input_data.target
     parent_results = []
     for parent in parent_nodes:
         if parent_operation == 'predict':
-            parent_results.append(parent.predict(input_data=input_data))
+            parent_results.append(parent.predict())
         elif parent_operation == 'fit':
-            parent_results.append(parent.fit(input_data=input_data))
+            parent_results.append(parent.fit())
         elif parent_operation == 'fine_tune':
-            parent.fine_tune(input_data=input_data, max_lead_time=max_tune_time)
-            parent_results.append(parent.predict(input_data=input_data))
+            parent.fine_tune(max_lead_time=max_tune_time)
+            parent_results.append(parent.predict())
         else:
             raise NotImplementedError()
 

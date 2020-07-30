@@ -5,9 +5,9 @@ import numpy as np
 from sklearn.datasets import make_classification
 from sklearn.metrics import roc_auc_score as roc_auc
 
-from core.composer.chain import Chain
+from core.chain.chain import Chain
 from core.composer.composer import ComposerRequirements, DummyChainTypeEnum, DummyComposer
-from core.models.data import InputData, train_test_data_setup
+from core.data.data import InputData, train_test_data_setup
 from core.repository.dataset_types import DataTypesEnum
 from core.repository.quality_metrics_repository import ClassificationMetricsEnum, MetricsRepository
 from core.repository.tasks import Task, TaskTypesEnum

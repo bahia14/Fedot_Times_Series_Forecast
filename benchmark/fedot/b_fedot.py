@@ -8,7 +8,7 @@ import numpy as np
 from benchmark.benchmark_utils import get_models_hyperparameters
 from core.composer.gp_composer.gp_composer import GPComposer, GPComposerRequirements
 from core.composer.visualisation import ComposerVisualiser
-from core.models.data import InputData
+from core.data.data import InputData
 from core.repository.model_types_repository import ModelTypesRepository
 from core.repository.quality_metrics_repository import \
     (ClassificationMetricsEnum,

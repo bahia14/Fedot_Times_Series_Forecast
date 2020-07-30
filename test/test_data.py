@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from core.models.data import InputData, OutputData
+from core.data.data import InputData, OutputData
 from core.repository.dataset_types import DataTypesEnum
 from core.repository.tasks import Task, TaskTypesEnum
 

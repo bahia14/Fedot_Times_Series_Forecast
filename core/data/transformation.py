@@ -4,7 +4,7 @@ from typing import List
 import numpy as np
 import pandas as pd
 
-from core.models.data import (
+from core.data.data import (
     InputData,
 )
 from core.repository.dataset_types import DataTypesEnum

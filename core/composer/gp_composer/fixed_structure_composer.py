@@ -4,12 +4,12 @@ from typing import (
     Optional,
 )
 
-from core.composer.chain import Chain
+from core.chain.chain import Chain
 from core.composer.composer import ComposerRequirements
 from core.composer.gp_composer.gp_composer import GPComposer
 from core.composer.optimisers.gp_optimiser import GPChainOptimiserParameters
 from core.composer.optimisers.mutation import MutationTypesEnum
-from core.models.data import InputData
+from core.data.data import InputData
 
 
 @dataclass

@@ -3,7 +3,7 @@ from typing import Optional
 
 import numpy as np
 
-from core.models.data import InputData
+from core.data.data import InputData
 from core.repository.dataset_types import DataTypesEnum
 from core.repository.model_types_repository import ModelMetaInfo, ModelTypesRepository
 from core.repository.tasks import Task, TaskTypesEnum, compatible_task_types
@@ -12,14 +12,14 @@ DEFAULT_PARAMS_STUB = 'default_params'
 
 
 class Model:
-    def __init__(self, model_type: str):
-        self.model_type = model_type
+    def __init__(self, id: str):
+        self.id = id
         self._eval_strategy, self._data_preprocessing = None, None
         self.params = DEFAULT_PARAMS_STUB
 
     @property
     def acceptable_task_types(self):
-        model_info = ModelTypesRepository().model_info_by_id(self.model_type)
+        model_info = ModelTypesRepository().model_info_by_id(self.id)
         return model_info.task_type
 
     def compatible_task_type(self, base_task_type: TaskTypesEnum):
@@ -30,16 +30,16 @@ class Model:
             compatible_task_types_acceptable_for_model = list(set(self.acceptable_task_types).intersection
                                                               (set(globally_compatible_task_types)))
             if len(compatible_task_types_acceptable_for_model) == 0:
-                raise ValueError(f'Model {self.model_type} can not be used as a part of {base_task_type}.')
+                raise ValueError(f'Model {self.id} can not be used as a part of {base_task_type}.')
             task_type_for_model = compatible_task_types_acceptable_for_model[0]
             return task_type_for_model
         return base_task_type
 
     @property
     def metadata(self) -> ModelMetaInfo:
-        model_info = ModelTypesRepository().model_info_by_id(self.model_type)
+        model_info = ModelTypesRepository().model_info_by_id(self.id)
         if not model_info:
-            raise ValueError(f'Model {self.model_type} not found')
+            raise ValueError(f'Model {self.id} not found')
         return model_info
 
     def output_datatype(self, input_datatype: DataTypesEnum) -> DataTypesEnum:
@@ -51,7 +51,7 @@ class Model:
 
     @property
     def description(self):
-        model_type = self.model_type
+        model_type = self.id
         model_params = self.params
         return f'n_{model_type}_{model_params}'
 
@@ -61,7 +61,7 @@ class Model:
         if self.params != DEFAULT_PARAMS_STUB:
             params_for_fit = self.params
 
-        self._eval_strategy = _eval_strategy_for_task(self.model_type, task.task_type)(self.model_type, params_for_fit)
+        self._eval_strategy = _eval_strategy_for_task(self.id, task.task_type)(self.id, params_for_fit)
 
     def fit(self, data: InputData):
         self._init(data.task)
@@ -107,7 +107,7 @@ class Model:
         return fitted_model, predict_train
 
     def __str__(self):
-        return f'{self.model_type}'
+        return f'{self.id}'
 
 
 def _eval_strategy_for_task(model_type: str, task_type_for_data: TaskTypesEnum):

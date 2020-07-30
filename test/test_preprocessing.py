@@ -2,9 +2,9 @@ import numpy as np
 import pytest
 from sklearn.datasets import load_iris
 
-from core.composer.node import PrimaryNode
-from core.models.data import InputData
-from core.models.preprocessing import Normalization
+from core.chain.node import ModelNode
+from core.data.data import InputData
+from core.data.preprocessing import Normalization
 from core.repository.dataset_types import DataTypesEnum
 from core.repository.tasks import Task, TaskTypesEnum
 
@@ -26,8 +26,8 @@ def data_setup() -> InputData:
 def test_node_with_manual_preprocessing_has_correct_behaviour_and_attributes(data_setup):
     model_type = 'logit'
 
-    node_default = PrimaryNode(model_type=model_type)
-    node_manual = PrimaryNode(model_type=model_type, manual_preprocessing_func=Normalization)
+    node_default = ModelNode(model_type=model_type)
+    node_manual = ModelNode(model_type=model_type, manual_preprocessing_func=Normalization)
 
     default_node_prediction = node_default.fit(data_setup)
     manual_node_prediction = node_manual.fit(data_setup)

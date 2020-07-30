@@ -2,15 +2,15 @@ import numpy as np
 from sklearn.metrics import roc_auc_score as roc_auc
 
 from benchmark.benchmark_utils import get_scoring_case_data_paths
-from core.composer.chain import Chain
-from core.composer.node import PrimaryNode, SecondaryNode
-from core.models.data import InputData
+from core.chain.chain import Chain
+from core.chain.node import ModelNode
+from core.data.data import InputData
 
 
 def get_simple_chain():
-    first = PrimaryNode(model_type='xgboost')
-    second = PrimaryNode(model_type='knn')
-    final = SecondaryNode(model_type='logit',
+    first = ModelNode(model_type='xgboost')
+    second = ModelNode(model_type='knn')
+    final = ModelNode(model_type='logit',
                           nodes_from=[first, second])
 
     chain = Chain(final)

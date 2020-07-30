@@ -5,7 +5,7 @@ from scipy import signal
 from sklearn.decomposition import PCA
 from statsmodels.tsa.seasonal import seasonal_decompose
 
-from core.models.data import InputData
+from core.data.data import InputData
 from core.models.evaluation.evaluation import EvaluationStrategy
 
 DEFAULT_EXPLAINED_VARIANCE_THR = 0.9
@@ -19,6 +19,10 @@ def _estimate_period(variable):
                               nperseg=int(len(variable) / analyse_ratio))
     period = int(1 / f[np.argmax(pxx_den)])
     return period
+
+
+def set_data(data: InputData, params: Optional[dict]):
+    return data
 
 
 def get_data(trained_model, predict_data: InputData):
@@ -99,7 +103,7 @@ def predict_pca(pca_model, predict_data: InputData):
 
 class DataModellingStrategy(EvaluationStrategy):
     _model_functions_by_type = {
-        'direct_data_model': (None, get_data),
+        'data_source': (set_data, get_data),
         'diff_data_model': (None, get_difference),
         'additive_data_model': (None, get_sum),
         'trend_data_model': (fit_residual, get_trend),

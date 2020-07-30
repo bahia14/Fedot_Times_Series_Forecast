@@ -3,9 +3,9 @@ import pytest
 from sklearn.datasets import make_classification
 from sklearn.metrics import roc_auc_score as roc_auc
 
-from core.models.data import InputData, train_test_data_setup
+from core.data.data import InputData, train_test_data_setup
 from core.models.model import Model
-from core.models.preprocessing import Scaling
+from core.data.preprocessing import Scaling
 from core.repository.dataset_types import DataTypesEnum
 from core.repository.tasks import Task, TaskTypesEnum
 
@@ -63,7 +63,7 @@ def test_log_regression_fit_correct(classification_dataset):
     data.features = Scaling().fit(data.features).apply(data.features)
     train_data, test_data = train_test_data_setup(data=data)
 
-    log_reg = Model(model_type='logit')
+    log_reg = Model(id='logit')
 
     _, train_predicted = log_reg.fit(data=train_data)
 
@@ -78,7 +78,7 @@ def test_random_forest_fit_correct(data_fixture, request):
     data.features = Scaling().fit(data.features).apply(data.features)
     train_data, test_data = train_test_data_setup(data=data)
 
-    random_forest = Model(model_type='rf')
+    random_forest = Model(id='rf')
 
     _, train_predicted = random_forest.fit(data=train_data)
 
@@ -93,7 +93,7 @@ def test_decision_tree_fit_correct(data_fixture, request):
     data.features = Scaling().fit(data.features).apply(data.features)
     train_data, test_data = train_test_data_setup(data=data)
 
-    decision_tree = Model(model_type='dt')
+    decision_tree = Model(id='dt')
 
     decision_tree.fit(data=train_data)
     _, train_predicted = decision_tree.fit(data=train_data)
@@ -109,7 +109,7 @@ def test_lda_fit_correct(data_fixture, request):
     data.features = Scaling().fit(data.features).apply(data.features)
     train_data, test_data = train_test_data_setup(data=data)
 
-    lda = Model(model_type='lda')
+    lda = Model(id='lda')
 
     _, train_predicted = lda.fit(data=train_data)
 
@@ -124,7 +124,7 @@ def test_qda_fit_correct(data_fixture, request):
     data.features = Scaling().fit(data.features).apply(data.features)
     train_data, test_data = train_test_data_setup(data=data)
 
-    qda = Model(model_type='qda')
+    qda = Model(id='qda')
 
     _, train_predicted = qda.fit(data=train_data)
 
@@ -139,7 +139,7 @@ def test_log_clustering_fit_correct(data_fixture, request):
     data.features = Scaling().fit(data.features).apply(data.features)
     train_data, test_data = train_test_data_setup(data=data)
 
-    kmeans = Model(model_type='kmeans')
+    kmeans = Model(id='kmeans')
 
     _, train_predicted = kmeans.fit(data=train_data)
 
@@ -152,7 +152,7 @@ def test_svc_fit_correct(data_fixture, request):
     data.features = Scaling().fit(data.features).apply(data.features)
     train_data, test_data = train_test_data_setup(data=data)
 
-    svc = Model(model_type='svc')
+    svc = Model(id='svc')
 
     _, train_predicted = svc.fit(data=train_data)
 
@@ -167,7 +167,7 @@ def test_pca_model_removes_redunant_features_correct():
                                                          n_informative=n_informative)
     train_data, test_data = train_test_data_setup(data=data)
 
-    pca = Model(model_type='pca_data_model')
+    pca = Model(id='pca_data_model')
     _, train_predicted = pca.fit(data=train_data)
 
     assert train_predicted.shape[1] < data.features.shape[1]

@@ -1,5 +1,5 @@
-from core.composer.chain import Chain
-from core.composer.node import PrimaryNode, SecondaryNode
+from core.chain.chain import Chain
+from core.chain.node import ModelNode
 from core.composer.optimisers.gp_operators import nodes_from_height
 
 
@@ -12,12 +12,12 @@ def chain_example():
     chain = Chain()
 
     root_of_tree, root_child_first, root_child_second = \
-        [SecondaryNode(model) for model in ('xgboost', 'xgboost',
+        [ModelNode(model) for model in ('xgboost', 'xgboost',
                                             'knn')]
 
     for root_node_child in (root_child_first, root_child_second):
         for requirement_model in ('logit', 'lda'):
-            new_node = PrimaryNode(requirement_model)
+            new_node = ModelNode(requirement_model)
             root_node_child.nodes_from.append(new_node)
             chain.add_node(new_node)
         chain.add_node(root_node_child)

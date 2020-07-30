@@ -2,18 +2,18 @@ import numpy as np
 from sklearn.datasets import load_iris
 from sklearn.metrics import roc_auc_score as roc_auc
 
-from core.composer.chain import Chain
-from core.composer.node import PrimaryNode, SecondaryNode
-from core.models.data import InputData, train_test_data_setup
+from core.chain.chain import Chain
+from core.chain.node import ModelNode
+from core.data.data import InputData, train_test_data_setup
 from core.repository.dataset_types import DataTypesEnum
 from core.repository.tasks import Task, TaskTypesEnum
 from test.test_model import classification_dataset_with_redunant_features
 
 
 def chain_simple() -> Chain:
-    node_first = PrimaryNode('svc')
-    node_second = PrimaryNode('lda')
-    node_final = SecondaryNode('rf', nodes_from=[node_first, node_second])
+    node_first = ModelNode('svc')
+    node_second = ModelNode('lda')
+    node_final = ModelNode('rf', nodes_from=[node_first, node_second])
 
     chain = Chain(node_final)
 
@@ -21,9 +21,9 @@ def chain_simple() -> Chain:
 
 
 def chain_with_pca() -> Chain:
-    node_first = PrimaryNode('pca_data_model')
-    node_second = PrimaryNode('lda')
-    node_final = SecondaryNode('rf', nodes_from=[node_first, node_second])
+    node_first = ModelNode('pca_data_model')
+    node_second = ModelNode('lda')
+    node_final = ModelNode('rf', nodes_from=[node_first, node_second])
 
     chain = Chain(node_final)
 

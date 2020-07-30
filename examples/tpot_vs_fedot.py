@@ -5,9 +5,9 @@ from sklearn.pipeline import make_pipeline
 from tpot.builtins import StackingEstimator
 from tpot.export_utils import set_param_recursive
 
-from core.composer.chain import Chain
-from core.composer.node import PrimaryNode, SecondaryNode
-from core.models.data import InputData
+from core.chain.chain import Chain
+from core.chain.node import ModelNode
+from core.data.data import InputData
 
 
 def run_tpot_vs_fedot_example(train_file_path: str, test_file_path: str):
@@ -36,9 +36,9 @@ def run_tpot_vs_fedot_example(train_file_path: str, test_file_path: str):
     print(roc_auc_value)
 
     chain = Chain()
-    node_first = PrimaryNode('direct_data_model')
-    node_second = PrimaryNode('bernb')
-    node_third = SecondaryNode('rf')
+    node_first = ModelNode('data_source')
+    node_second = ModelNode('bernb')
+    node_third = ModelNode('rf')
 
     node_third.nodes_from.append(node_first)
     node_third.nodes_from.append(node_second)

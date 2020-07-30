@@ -2,8 +2,8 @@ from typing import Dict
 
 import numpy as np
 
-from core.composer.chain import Chain
-from core.models.data import InputData
+from core.chain.chain import Chain
+from core.data.data import InputData
 from core.repository.dataset_types import DataTypesEnum
 from core.repository.tasks import Task, TaskTypesEnum
 from utilities.synthetic.chain import separately_fit_chain

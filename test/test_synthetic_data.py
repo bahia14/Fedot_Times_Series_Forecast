@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from core.models.data import InputData
+from core.data.data import InputData
 from utilities.synthetic.data import (
     classification_dataset, gauss_quantiles_dataset)
 from utilities.synthetic.data_benchmark import synthetic_benchmark_dataset

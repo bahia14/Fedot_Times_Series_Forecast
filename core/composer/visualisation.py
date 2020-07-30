@@ -12,7 +12,7 @@ import pandas as pd
 from PIL import Image
 from imageio import get_writer, imread
 
-from core.composer.chain import Chain, as_nx_graph
+from core.chain.chain import Chain, as_nx_graph
 from core.utils import project_root
 
 

@@ -5,11 +5,11 @@ from datetime import timedelta
 import numpy as np
 from sklearn.metrics import roc_auc_score as roc_auc
 
-from core.composer.chain import Chain
+from core.chain.chain import Chain
 from core.composer.gp_composer.gp_composer import \
     GPComposer, GPComposerRequirements
 from core.composer.visualisation import ComposerVisualiser
-from core.models.data import InputData
+from core.data.data import InputData
 from core.repository.model_types_repository import ModelTypesRepository
 from core.repository.quality_metrics_repository import \
     ClassificationMetricsEnum, MetricsRepository

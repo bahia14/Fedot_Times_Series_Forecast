@@ -2,7 +2,7 @@ import numpy as np
 from sklearn import preprocessing
 from sklearn.impute import SimpleImputer
 
-from core.models.data import InputData
+from core.data.data import InputData
 from core.repository.dataset_types import DataTypesEnum
 
 
