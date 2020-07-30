@@ -8,7 +8,7 @@ import pytest
 from sklearn.datasets import load_iris
 
 from core.chain.chain import Chain
-from core.chain.node import ModelNode
+from core.chain.node import ModelNode, DataNode
 from core.data.data import InputData, train_test_data_setup
 from core.repository.dataset_types import DataTypesEnum
 from core.repository.tasks import Task, TaskTypesEnum
@@ -89,7 +89,6 @@ def test_chain_hierarchy_fit_correct(data_setup):
         '/n_logit_default_params;)'
         '/n_logit_default_params')
 
-
     assert chain.length == 5
     assert chain.depth == 4
     assert train_predicted.predict.shape[0] == train.target.shape[0]
@@ -105,20 +104,19 @@ def test_chain_sequential_fit_correct(data_setup):
     third = ModelNode(model_type='logit', nodes_from=[second])
     final = ModelNode(model_type='logit', nodes_from=[third])
 
-    chain = Chain()
-    for node in [first, second, third, final]:
-        chain.add_node(node)
+    chain = Chain(final)
 
     train_predicted = chain.fit(input_data=train, use_cache=False)
 
     assert chain.root_node.descriptive_id == (
-        '(((/n_logit_default_params;)/'
+        '((((/n_data_source_default_params;)'
+        '/n_logit_default_params;)/'
         'n_logit_default_params;)/'
         'n_logit_default_params;)/'
         'n_logit_default_params')
 
-    assert chain.length == 4
-    assert chain.depth == 4
+    assert chain.length == 5
+    assert chain.depth == 5
     assert train_predicted.predict.shape[0] == train.target.shape[0]
     assert final.cache.actual_cached_state is not None
 
@@ -127,15 +125,12 @@ def test_chain_with_datamodel_fit_correct(data_setup):
     data = data_setup
     train_data, test_data = train_test_data_setup(data)
 
-    chain = Chain()
-    node_data = ModelNode('data_source')
+    node_data = DataNode()
     node_first = ModelNode('bernb')
     node_second = ModelNode('rf')
     node_second.nodes_from = [node_first, node_data]
 
-    chain.add_node(node_data)
-    chain.add_node(node_first)
-    chain.add_node(node_second)
+    chain = Chain(node_second)
 
     chain.fit(train_data)
     results = np.asarray(probs_to_labels(chain.predict(test_data).predict))
@@ -152,9 +147,7 @@ def test_secondary_nodes_is_invariant_to_inputs_order(data_setup):
     final = ModelNode(model_type='xgboost',
                       nodes_from=[first, second, third])
 
-    chain = Chain()
-    for node in [first, second, third, final]:
-        chain.add_node(node)
+    chain = Chain(final)
 
     first = deepcopy(first)
     second = deepcopy(second)

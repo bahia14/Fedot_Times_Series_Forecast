@@ -36,13 +36,22 @@ class Chain:
         if not any([node.model.id == 'data_source' for node in self.nodes]):
             if isinstance(input_data, InputData):
                 # if single data source not created yet
-                data_source = DataNode(input_data, 'data_source')
+                data_source = DataNode()
                 self.nodes.append(data_source)
                 for node in self.nodes:
                     if not node.nodes_from and not isinstance(node, DataNode):
                         node.nodes_from = [data_source]
             else:
                 raise ValueError('No data source in chain')
+
+        data_for_node = input_data
+        for node in self.nodes:
+            if isinstance(node, DataNode):
+                if isinstance(input_data, dict):
+                    data_for_node = input_data.get(node, None)
+                # fit data source
+                node.cache.clear()
+                node.fit_with_data(data_for_node)
 
         train_predicted = self.root_node.fit(verbose=verbose)
 
@@ -72,7 +81,7 @@ class Chain:
         if verbose:
             print('Start tuning of primary nodes')
 
-        all_primary_nodes = [node for node in self.nodes if isinstance(node, ModelNode)]
+        all_primary_nodes = [node for node in self.nodes if node.is_primary]
         for node in all_primary_nodes:
             node.fine_tune(max_lead_time=max_lead_time, iterations=iterations)
 
@@ -86,7 +95,7 @@ class Chain:
             print('Start tuning of chain')
 
         node = self.root_node
-        node.fine_tune(input_data, max_lead_time=max_lead_time, iterations=iterations)
+        node.fine_tune(max_lead_time=max_lead_time, iterations=iterations)
 
         if verbose:
             print('End tuning')

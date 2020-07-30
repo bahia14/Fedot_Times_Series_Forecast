@@ -155,12 +155,10 @@ class Node(ABC):
 
 
 class DataNode(Node):
-    def __init__(self, input_data: InputData, model_type: Optional[str] = None):
+    def __init__(self, model_type: Optional[str] = None):
         if not model_type:
             model_type = 'data_source'
         super().__init__(nodes_from=None, model_type=model_type)
-        self.fit_with_data(input_data)
-
     def fit(self, verbose: bool = False):
         data = self.cache.actual_cached_state.model
         return self.output_from_prediction(input_data=data, prediction=data.features)

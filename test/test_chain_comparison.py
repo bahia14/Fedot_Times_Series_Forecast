@@ -85,7 +85,7 @@ def equality_cases():
 
     # the following changes don't affect to chains equality:
     for node_num, type in enumerate(['knn', 'lda']):
-        pairs[1][1].root_node.nodes_from[node_num].model.model_type = type
+        pairs[1][1].root_node.nodes_from[node_num].model.id = type
 
     for node_num in ((2, 1), (1, 2)):
         old_node = pairs[2][1].root_node.nodes_from[node_num[0]]

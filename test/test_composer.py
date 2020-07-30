@@ -35,56 +35,6 @@ def file_data_setup():
     input_data.idx = _to_numerical(categorical_ids=input_data.idx)
     return input_data
 
-
-def test_dummy_composer_hierarchical_chain_build_correct():
-    composer = DummyComposer(DummyChainTypeEnum.hierarchical)
-    empty_data = InputData(idx=np.zeros(1), features=np.zeros(1), target=np.zeros(1),
-                           task=Task(TaskTypesEnum.classification),
-                           data_type=DataTypesEnum.table)
-
-    primary = ['logit', 'xgboost']
-    secondary = ['logit']
-
-    composer_requirements = ComposerRequirements(primary=primary,
-                                                 secondary=secondary)
-    new_chain = composer.compose_chain(data=empty_data,
-                                       initial_chain=None,
-                                       composer_requirements=composer_requirements,
-                                       metrics=None)
-
-    assert len(new_chain.nodes) == 3
-    assert isinstance(new_chain.nodes[0], ModelNode)
-    assert isinstance(new_chain.nodes[1], ModelNode)
-    assert isinstance(new_chain.nodes[2], ModelNode)
-    assert new_chain.nodes[2].nodes_from[0] is new_chain.nodes[0]
-    assert new_chain.nodes[2].nodes_from[1] is new_chain.nodes[1]
-    assert new_chain.nodes[1].nodes_from is None
-
-
-def test_dummy_composer_flat_chain_build_correct():
-    composer = DummyComposer(DummyChainTypeEnum.flat)
-    empty_data = InputData(idx=np.zeros(1), features=np.zeros(1), target=np.zeros(1),
-                           task=Task(TaskTypesEnum.classification), data_type=DataTypesEnum.table)
-
-    primary = ['logit']
-    secondary = ['logit', 'xgboost']
-
-    composer_requirements = ComposerRequirements(primary=primary,
-                                                 secondary=secondary)
-    new_chain = composer.compose_chain(data=empty_data,
-                                       initial_chain=None,
-                                       composer_requirements=composer_requirements,
-                                       metrics=None)
-
-    assert len(new_chain.nodes) == 3
-    assert isinstance(new_chain.nodes[0], ModelNode)
-    assert isinstance(new_chain.nodes[1], ModelNode)
-    assert isinstance(new_chain.nodes[2], ModelNode)
-    assert new_chain.nodes[1].nodes_from[0] is new_chain.nodes[0]
-    assert new_chain.nodes[2].nodes_from[0] is new_chain.nodes[1]
-    assert new_chain.nodes[0].nodes_from is None
-
-
 @pytest.mark.parametrize('data_fixture', ['file_data_setup'])
 def test_random_composer(data_fixture, request):
     random.seed(1)

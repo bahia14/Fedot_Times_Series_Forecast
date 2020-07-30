@@ -147,7 +147,7 @@ def show_chain_template(models_by_level):
     for level in range(len(models_by_level)):
         print(f'Level = {level}')
         for model in models_by_level[level]:
-            print(f'{model.model_type}, input = {model.input_shape}, output = {model.output_shape}')
+            print(f'{model.id}, input = {model.input_shape}, output = {model.output_shape}')
 
 
 # TODO: refactor skip_fit logic
