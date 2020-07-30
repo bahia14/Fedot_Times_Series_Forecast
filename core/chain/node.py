@@ -52,7 +52,8 @@ class Node(ABC):
         return OutputData(idx=input_data.idx,
                           features=input_data.features,
                           predict=prediction, task=input_data.task,
-                          data_type=self.model.output_datatype(input_data.data_type))
+                          data_type=self.model.output_datatype(input_data.data_type),
+                          target=input_data.target)
 
     def _transform(self, input_data: InputData):
         transformed_data = transformation_function_for_data(
@@ -161,10 +162,12 @@ class DataNode(Node):
         self.fit_with_data(input_data)
 
     def fit(self, verbose: bool = False):
-        return self.cache.actual_cached_state.model
+        data = self.cache.actual_cached_state.model
+        return self.output_from_prediction(input_data=data, prediction=data.features)
 
     def predict(self, verbose: bool = False):
-        raise self.cache.actual_cached_state.model
+        data = self.cache.actual_cached_state.model
+        raise self.output_from_prediction(input_data=data, prediction=data.features)
 
     def fine_tune(self, max_lead_time: timedelta = timedelta(minutes=5),
                   iterations: int = 30):
@@ -275,5 +278,8 @@ def _combine_parents_simple(parent_nodes: List[Node],
             parent_results.append(parent.predict())
         else:
             raise NotImplementedError()
+
+    # TODO change to main data
+    target = parent_results[0].target
 
     return parent_results, target

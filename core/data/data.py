@@ -15,6 +15,8 @@ class Data:
     features: np.array
     task: Task
     data_type: DataTypesEnum
+    target: np.array = None
+
 
     @staticmethod
     def from_csv(file_path, delimiter=',',
@@ -36,7 +38,6 @@ class Data:
 
 @dataclass
 class InputData(Data):
-    target: np.array = None
     is_main_dataset: bool = True
 
     @property

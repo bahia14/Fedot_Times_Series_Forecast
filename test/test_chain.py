@@ -81,14 +81,17 @@ def test_chain_hierarchy_fit_correct(data_setup):
     train_predicted = chain.fit(input_data=train, use_cache=False)
 
     assert chain.root_node.descriptive_id == (
-        '((/n_logit_default_params;)/'
-        'n_logit_default_params;;(/'
-        'n_logit_default_params;)/'
-        'n_logit_default_params;)/'
-        'n_logit_default_params')
+        '(((/n_data_source_default_params;)'
+        '/n_logit_default_params;)'
+        '/n_logit_default_params;;(('
+        '/n_data_source_default_params;)'
+        '/n_logit_default_params;)'
+        '/n_logit_default_params;)'
+        '/n_logit_default_params')
 
-    assert chain.length == 4
-    assert chain.depth == 3
+
+    assert chain.length == 5
+    assert chain.depth == 4
     assert train_predicted.predict.shape[0] == train.target.shape[0]
     assert final.cache.actual_cached_state is not None
 
@@ -147,7 +150,7 @@ def test_secondary_nodes_is_invariant_to_inputs_order(data_setup):
     second = ModelNode(model_type='lda')
     third = ModelNode(model_type='knn')
     final = ModelNode(model_type='xgboost',
-                          nodes_from=[first, second, third])
+                      nodes_from=[first, second, third])
 
     chain = Chain()
     for node in [first, second, third, final]:
@@ -157,7 +160,7 @@ def test_secondary_nodes_is_invariant_to_inputs_order(data_setup):
     second = deepcopy(second)
     third = deepcopy(third)
     final_shuffled = ModelNode(model_type='xgboost',
-                                   nodes_from=[third, first, second])
+                               nodes_from=[third, first, second])
 
     chain_shuffled = Chain()
     # change order of nodes in list

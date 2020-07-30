@@ -176,7 +176,7 @@ class Chain:
         def _depth_recursive(node):
             if node is None:
                 return 0
-            if isinstance(node, ModelNode):
+            if not node.nodes_from:
                 return 1
             else:
                 return 1 + max([_depth_recursive(next_node) for next_node in node.nodes_from])
