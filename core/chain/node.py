@@ -22,6 +22,12 @@ class Node(ABC):
         self.manual_preprocessing_func = None
 
     @property
+    def is_primary(self):
+        real_primary = not self.nodes_from and isinstance(self, ModelNode)
+        primary_after_data = self.nodes_from and all([isinstance(node, DataNode) for node in self.nodes_from])
+        return real_primary or primary_after_data
+
+    @property
     def descriptive_id(self):
         return self._descriptive_id_recursive(visited_nodes=[])
 
@@ -159,13 +165,13 @@ class DataNode(Node):
         if not model_type:
             model_type = 'data_source'
         super().__init__(nodes_from=None, model_type=model_type)
+
     def fit(self, verbose: bool = False):
         data = self.cache.actual_cached_state.model
         return self.output_from_prediction(input_data=data, prediction=data.features)
 
     def predict(self, verbose: bool = False):
-        data = self.cache.actual_cached_state.model
-        raise self.output_from_prediction(input_data=data, prediction=data.features)
+        return self.fit(verbose)
 
     def fine_tune(self, max_lead_time: timedelta = timedelta(minutes=5),
                   iterations: int = 30):
@@ -237,7 +243,7 @@ class ModelNode(Node):
                                                              parent_operation,
                                                              max_tune_time)
 
-        if self.local_target:
+        if self.local_target is not None:
             target = self.local_target
 
         secondary_input = InputData.from_predictions(outputs=parent_results,

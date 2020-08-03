@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 from random import seed
 
 import pytest
@@ -8,7 +9,6 @@ from core.chain.chain import Chain
 from core.chain.node import ModelNode
 from core.data.data import InputData, train_test_data_setup
 from core.repository.tasks import Task, TaskTypesEnum
-from datetime import timedelta
 
 seed(1)
 
@@ -32,10 +32,9 @@ def get_regr_chain():
     first = ModelNode(model_type='xgbreg')
     second = ModelNode(model_type='knnreg')
     final = ModelNode(model_type='linear',
-                                         nodes_from=[first, second])
+                      nodes_from=[first, second])
 
-    chain = Chain()
-    chain.add_node(final)
+    chain = Chain(final)
 
     return chain
 
@@ -45,10 +44,9 @@ def get_class_chain():
     first = ModelNode(model_type='xgboost')
     second = ModelNode(model_type='knn')
     final = ModelNode(model_type='logit',
-                                         nodes_from=[first, second])
+                      nodes_from=[first, second])
 
-    chain = Chain()
-    chain.add_node(final)
+    chain = Chain(final)
 
     return chain
 

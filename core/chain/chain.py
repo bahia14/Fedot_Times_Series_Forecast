@@ -15,13 +15,16 @@ ERROR_PREFIX = 'Invalid chain configuration:'
 class Chain:
     def __init__(self, nodes: Optional[Union[Node, List[Node]]] = None):
         self.nodes = []
-        self.data_source = []
         if nodes:
             if isinstance(nodes, list):
                 for node in nodes:
                     self.add_node(node)
             else:
                 self.add_node(nodes)
+
+    @property
+    def model_nodes(self):
+        return [n for n in self.nodes if isinstance(n, ModelNode)]
 
     def fit_from_scratch(self, input_data: InputData, verbose=False):
         # Clean all cache and fit all models
@@ -83,7 +86,8 @@ class Chain:
 
         all_primary_nodes = [node for node in self.nodes if node.is_primary]
         for node in all_primary_nodes:
-            node.fine_tune(max_lead_time=max_lead_time, iterations=iterations)
+            node.fine_tune_with_data(input_data=input_data,
+                                     max_lead_time=max_lead_time, iterations=iterations)
 
         if verbose:
             print('End tuning')
@@ -178,12 +182,12 @@ class Chain:
 
     @property
     def length(self) -> int:
-        return len(self.nodes)
+        return len([self.model_nodes])
 
     @property
     def depth(self) -> int:
         def _depth_recursive(node):
-            if node is None:
+            if node is None or isinstance(node, DataNode):
                 return 0
             if not node.nodes_from:
                 return 1

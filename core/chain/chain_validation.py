@@ -45,7 +45,7 @@ def has_no_isolated_nodes(chain: Chain):
 
 
 def has_primary_nodes(chain: Chain):
-    if not any(node for node in chain.nodes if isinstance(node, ModelNode)):
+    if not any(node for node in chain.nodes if node.is_primary):
         raise ValueError(f'{ERROR_PREFIX} Chain does not have primary nodes')
     return True
 

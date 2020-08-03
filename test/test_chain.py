@@ -126,9 +126,8 @@ def test_chain_with_datamodel_fit_correct(data_setup):
     train_data, test_data = train_test_data_setup(data)
 
     node_data = DataNode()
-    node_first = ModelNode('bernb')
-    node_second = ModelNode('rf')
-    node_second.nodes_from = [node_first, node_data]
+    node_first = ModelNode('bernb', [node_data])
+    node_second = ModelNode('rf', [node_first, node_data])
 
     chain = Chain(node_second)
 

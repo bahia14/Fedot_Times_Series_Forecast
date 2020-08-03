@@ -16,7 +16,7 @@ class PreprocessingStrategy:
 
 class Scaling(PreprocessingStrategy):
     def __init__(self):
-        self.default = DefaultStrategy()
+        self.default = SimpleStrategy()
         self.scaler = preprocessing.StandardScaler()
 
     def fit(self, data_to_fit):
@@ -33,7 +33,7 @@ class Scaling(PreprocessingStrategy):
 
 class Normalization(PreprocessingStrategy):
     def __init__(self):
-        self.default = DefaultStrategy()
+        self.default = SimpleStrategy()
 
     def fit(self, data_to_fit):
         self.default.fit(data_to_fit)
@@ -46,7 +46,7 @@ class Normalization(PreprocessingStrategy):
         return resulted
 
 
-class DefaultStrategy(PreprocessingStrategy):
+class SimpleStrategy(PreprocessingStrategy):
     def __init__(self):
         self.imputer = SimpleImputer(missing_values=np.nan, strategy='mean')
 
@@ -82,7 +82,7 @@ class LaggedTimeSeriesFeature3dStrategy(PreprocessingStrategy):
 
 
 _preprocessing_for_input_data = {
-    DataTypesEnum.ts: DefaultStrategy,
+    DataTypesEnum.ts: SimpleStrategy,
     DataTypesEnum.table: Scaling,
     DataTypesEnum.ts_lagged_table: Scaling,
     DataTypesEnum.ts_lagged_3d: LaggedTimeSeriesFeature3dStrategy,
@@ -90,7 +90,7 @@ _preprocessing_for_input_data = {
 
 
 def preprocessing_func_for_data(data: InputData, node: 'Node'):
-    preprocessing_func = DefaultStrategy
+    preprocessing_func = SimpleStrategy
     if 'without_preprocessing' not in node.model.metadata.tags:
         if node.manual_preprocessing_func:
             preprocessing_func = node.manual_preprocessing_func

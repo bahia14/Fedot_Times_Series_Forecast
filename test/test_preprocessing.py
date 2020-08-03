@@ -29,8 +29,8 @@ def test_node_with_manual_preprocessing_has_correct_behaviour_and_attributes(dat
     node_default = ModelNode(model_type=model_type)
     node_manual = ModelNode(model_type=model_type, manual_preprocessing_func=Normalization)
 
-    default_node_prediction = node_default.fit(data_setup)
-    manual_node_prediction = node_manual.fit(data_setup)
+    default_node_prediction = node_default.fit_with_data(data_setup)
+    manual_node_prediction = node_manual.fit_with_data(data_setup)
 
     assert node_manual.manual_preprocessing_func is not None
     assert node_default.manual_preprocessing_func != node_manual.manual_preprocessing_func
