@@ -4,9 +4,10 @@ from copy import deepcopy
 from random import sample
 
 import numpy as np
-from hyperopt import tpe, fmin, Trials, space_eval, hp
+from hyperopt import Trials, fmin, hp, space_eval, tpe
+from imblearn.under_sampling import RandomUnderSampler
 from scipy import stats
-from sklearn.model_selection import cross_val_score, GroupKFold
+from sklearn.model_selection import GroupKFold, cross_val_score
 
 
 def _search_space_transform(params):
@@ -175,13 +176,23 @@ class FLOAdapter(TunerAdapter):
             y_train, y_test = self.data.target[train_index], self.data.target[test_index]
 
             # Training the model.
-            sampled_features_train = X_train[0:sample_size, :]
-            sampled_target_train = y_train[0:sample_size]
+            # sampled_features_train = X_train[0:sample_size, :]
+            # sampled_target_train = y_train[0:sample_size]
             self.model_to_adapt.set_params(**params)
+            sampled_features_train, sampled_target_train = \
+                RandomUnderSampler(sampling_strategy=0.6).fit_resample(X_train, y_train)
+
+            np.random.shuffle(sampled_features_train)
+            # sampled_features_train = sampled_features_train[0:sample_size, :]
+            np.random.shuffle(sampled_target_train)
+            # sampled_target_train = sampled_target_train[0:sample_size]
+
             self.model_to_adapt.fit(sampled_features_train, sampled_target_train)
 
+            x_test_bal, y_test_bal = RandomUnderSampler(sampling_strategy=0.6).fit_resample(X_test, y_test)
+
             # Aggregating the results of the iterations as a list.
-            scores.append(abs(self.scorer(self.model_to_adapt, X_test, y_test)))
+            scores.append(abs(self.scorer(self.model_to_adapt, x_test_bal, y_test_bal)))
         return np.array(scores).mean(), scores
 
     def tune(self):
@@ -208,7 +219,7 @@ class FLOAdapter(TunerAdapter):
         complexity = default_complexity
 
         # initial sample size
-        default_sample_size = 100
+        default_sample_size = 500
         sample_size = default_sample_size
 
         # Geometric Base
@@ -247,7 +258,7 @@ class FLOAdapter(TunerAdapter):
                                                         'BASE MODEL',
                                                         performance)
 
-        for iteration in range(50):
+        for iteration in range(100):
             print(iteration)
             if expected_time <= expected_improvement_time:
                 space_positive_direction, space_negative_dicrection = \
@@ -373,15 +384,15 @@ class FLOAdapter(TunerAdapter):
                                               current=mean_score):
                     current_model_score, current_model_scores, performance, last_config_time_0, \
                     second_to_last_config_time_0 = self.verbose_state(end_time, expected_improvement_time,
-                                                                    expected_time, sample_size,
-                                                                    complexity, failed_improvements_number,
-                                                                    base, current_model_score, mean_score,
-                                                                    scores, current_model_scores,
-                                                                    {**space_positive_direction[0],
-                                                                     **space_positive_direction[1]},
-                                                                    # {**full_space[0],
-                                                                    #  **full_space[1]},
-                                                                    'UPDATE SIZE', performance)
+                                                                      expected_time, sample_size,
+                                                                      complexity, failed_improvements_number,
+                                                                      base, current_model_score, mean_score,
+                                                                      scores, current_model_scores,
+                                                                      {**space_positive_direction[0],
+                                                                       **space_positive_direction[1]},
+                                                                      # {**full_space[0],
+                                                                      #  **full_space[1]},
+                                                                      'UPDATE SIZE', performance)
                     print('Performance Improve by UPDATE SIZE', "\r\n")
                     self.best_params = {**space_positive_direction[0],
                                         **space_positive_direction[1]}

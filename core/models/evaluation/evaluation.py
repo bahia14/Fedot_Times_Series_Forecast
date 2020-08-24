@@ -26,7 +26,7 @@ from xgboost import XGBClassifier, XGBRegressor
 
 from core.models.data import InputData, OutputData
 from core.models.evaluation.custom_models.models import CustomSVC
-from core.models.tuning.tuners import SklearnTuner, SklearnCustomRandomTuner, get_params_range
+from core.models.tuning.tuners import SklearnCustomRandomTuner, SklearnTuner, get_params_range
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
@@ -90,7 +90,7 @@ class SkLearnEvaluationStrategy(EvaluationStrategy):
         if self.params_for_fit:
             sklearn_model = self._sklearn_model_impl(**self.params_for_fit)
         else:
-            sklearn_model = self._sklearn_model_impl()
+            sklearn_model = self._sklearn_model_impl(n_jobs=-1)
 
         sklearn_model.fit(train_data.features, train_data.target.ravel())
         return sklearn_model
@@ -116,6 +116,7 @@ class SkLearnEvaluationStrategy(EvaluationStrategy):
 
         if best_model or tuned_params:
             self.params_for_fit = tuned_params
+            self.params_for_fit['n_jobs'] = -1
             trained_model = best_model
 
         return trained_model, tuned_params

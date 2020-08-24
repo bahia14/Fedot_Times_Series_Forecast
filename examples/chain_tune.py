@@ -8,9 +8,9 @@ from core.models.data import InputData
 
 
 def get_simple_chain():
-    first = PrimaryNode(model_type='xgboost')
+    first = PrimaryNode(model_type='knn')
     second = PrimaryNode(model_type='knn')
-    final = SecondaryNode(model_type='logit',
+    final = SecondaryNode(model_type='knn',
                           nodes_from=[first, second])
 
     chain = Chain(final)
@@ -20,7 +20,7 @@ def get_simple_chain():
 
 def chain_tuning(nodes_to_tune: str, chain: Chain, train_data: InputData,
                  test_data: InputData, local_iter: int,
-                 tuner_iter_num: int = 50) -> (float, list):
+                 tuner_iter_num: int = 5) -> (float, list):
     several_iter_scores_test = []
 
     if nodes_to_tune == 'primary':
