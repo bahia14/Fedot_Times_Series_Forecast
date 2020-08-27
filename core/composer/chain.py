@@ -39,6 +39,14 @@ class Chain:
         result = self.root_node.predict(input_data=input_data)
         return result
 
+    def fine_tune_complex(self, input_data: InputData, iterations: int = 30,
+                          max_lead_time: timedelta = timedelta(minutes=5),
+                          verbose=False):
+        all_primary_nodes = [node for node in self.nodes if isinstance(node, PrimaryNode)]
+        for node in all_primary_nodes:
+            # node.fine_tune(input_data, max_lead_time=max_lead_time, iterations=iterations)
+            pass
+
     def fine_tune_primary_nodes(self, input_data: InputData, iterations: int = 30,
                                 max_lead_time: timedelta = timedelta(minutes=5),
                                 verbose=False):

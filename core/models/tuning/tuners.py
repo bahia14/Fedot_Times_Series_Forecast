@@ -78,6 +78,68 @@ class Tuner:
 
         # balanced_features = np.asarray(balanced_features)
         # balanced_target = np.asarray(balanced_target)
+
+        from sklearn.metrics import roc_auc_score as roc_auc
+
+        from core.models.data import InputData
+
+        from benchmark.benchmark_utils import get_scoring_case_data_paths
+
+        train_file_path, test_file_path = get_scoring_case_data_paths()
+
+        train_data = InputData.from_csv(train_file_path)
+        test_data = InputData.from_csv(test_file_path)
+        # scaler = Scaling().fit(train_data.features)
+        # features = scaler.apply(train_data.features)
+
+        from core.composer.chain import Chain
+        from core.composer.node import PrimaryNode, SecondaryNode
+
+        def get_simple_chain():
+            first = PrimaryNode(model_type='knn')
+            second = PrimaryNode(model_type='knn')
+            final = SecondaryNode(model_type='knn',
+                                  nodes_from=[first, second])
+
+            chain = Chain(final)
+
+            return chain
+
+        chain = get_simple_chain()
+        params = model.get_params()
+
+        for node in [_ for _ in chain.nodes if isinstance(_, PrimaryNode)]:
+            if str(node.model) == str(model):
+                node.model.params = params
+
+        chain.fit(train_data)
+
+        after_tuning_predicted = chain.predict(test_data).predict
+
+        # Metrics
+        score = roc_auc(y_true=test_data.target,
+                        y_score=after_tuning_predicted)
+
+        # score = abs(cross_val_score(model, balanced_features,
+        #                            balanced_target, scoring=self.scorer,
+        #                            cv=2, n_jobs=-1).mean())
+
+        # params = model.get_params()
+
+        return score, params
+
+    def get_cross_val_score_and_params2(self, model):
+        balanced_features, balanced_target = RandomUnderSampler(sampling_strategy=0.5). \
+            fit_resample(self.tune_data.features, self.tune_data.target)
+
+        c = list(zip(balanced_features, balanced_target))
+
+        random.shuffle(c)
+
+        balanced_features, balanced_target = zip(*c)
+
+        # balanced_features = np.asarray(balanced_features)
+        # balanced_target = np.asarray(balanced_target)
         from core.models.preprocessing import Scaling
 
         from sklearn.metrics import roc_auc_score as roc_auc

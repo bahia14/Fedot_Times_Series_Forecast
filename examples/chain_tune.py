@@ -9,7 +9,7 @@ from core.models.data import InputData
 
 def get_simple_chain():
     first = PrimaryNode(model_type='knn')
-    second = PrimaryNode(model_type='knn')
+    second = PrimaryNode(model_type='logit')
     final = SecondaryNode(model_type='knn',
                           nodes_from=[first, second])
 
