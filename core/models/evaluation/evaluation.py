@@ -98,7 +98,7 @@ class SkLearnEvaluationStrategy(EvaluationStrategy):
     def predict(self, trained_model, predict_data: InputData) -> OutputData:
         raise NotImplementedError()
 
-    def fit_tuned(self, train_data: InputData, iterations: int,
+    def fit_tuned(self, train_data: InputData, chain, iterations: int,
                   max_lead_time: timedelta = timedelta(minutes=5)):
         trained_model = self.fit(train_data=train_data)
         self._tune_strategy = SklearnCustomRandomTuner
@@ -109,6 +109,7 @@ class SkLearnEvaluationStrategy(EvaluationStrategy):
 
         tuned_params, best_model = self._tune_strategy(trained_model=trained_model,
                                                        tune_data=train_data,
+                                                       chain=chain,
                                                        params_range=params_range,
                                                        cross_val_fold_num=5,
                                                        time_limit=max_lead_time,

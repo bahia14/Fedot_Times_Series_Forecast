@@ -107,13 +107,14 @@ class Node(ABC):
 
         return self.output_from_prediction(input_data, model_predict)
 
-    def fine_tune(self, input_data: InputData,
+    def fine_tune(self, chain: 'Chain', input_data: InputData,
                   max_lead_time: timedelta = timedelta(minutes=5), iterations: int = 30):
 
         transformed = self._transform(input_data)
         preprocessed_data, preproc_strategy = self._preprocess(transformed)
 
         fitted_model, _ = self.model.fine_tune(preprocessed_data,
+                                               chain,
                                                max_lead_time=max_lead_time,
                                                iterations=iterations)
 
@@ -225,7 +226,7 @@ class SecondaryNode(Node):
 
         return super().predict(input_data=secondary_input)
 
-    def fine_tune(self, input_data: InputData,
+    def fine_tune(self, chain, input_data: InputData,
                   max_lead_time: timedelta = timedelta(minutes=5), iterations: int = 30,
                   verbose: bool = False):
         if verbose:
@@ -233,9 +234,9 @@ class SecondaryNode(Node):
 
         secondary_input = self._input_from_parents(input_data=input_data,
                                                    parent_operation='fine_tune',
-                                                   max_tune_time=max_lead_time, verbose=verbose)
+                                                   max_tune_time=max_lead_time, verbose=verbose, chain=chain)
 
-        return super().fine_tune(input_data=secondary_input)
+        return super().fine_tune(chain, secondary_input, max_lead_time, iterations)
 
     def _nodes_from_with_fixed_order(self):
         if self.nodes_from is not None:
@@ -244,7 +245,7 @@ class SecondaryNode(Node):
     def _input_from_parents(self, input_data: InputData,
                             parent_operation: str,
                             max_tune_time: Optional[timedelta] = None,
-                            verbose=False) -> InputData:
+                            verbose=False, chain=None) -> InputData:
         if len(self.nodes_from) == 0:
             raise ValueError()
 
@@ -261,7 +262,7 @@ class SecondaryNode(Node):
                                                                           parent_operation)
         else:
             parent_results, target = _combine_parents_simple(parent_nodes, input_data,
-                                                             parent_operation, max_tune_time)
+                                                             parent_operation, max_tune_time, chain)
 
         secondary_input = InputData.from_predictions(outputs=parent_results,
                                                      target=target)
@@ -289,7 +290,8 @@ def _combine_parents_that_affects_target(parent_nodes: List[Node],
 def _combine_parents_simple(parent_nodes: List[Node],
                             input_data: InputData,
                             parent_operation: str,
-                            max_tune_time: Optional[timedelta]):
+                            max_tune_time: Optional[timedelta],
+                            chain):
     target = input_data.target
     parent_results = []
     for parent in parent_nodes:
@@ -298,7 +300,7 @@ def _combine_parents_simple(parent_nodes: List[Node],
         elif parent_operation == 'fit':
             parent_results.append(parent.fit(input_data=input_data))
         elif parent_operation == 'fine_tune':
-            parent.fine_tune(input_data=input_data, max_lead_time=max_tune_time)
+            parent.fine_tune(input_data=input_data, max_lead_time=max_tune_time, chain=chain)
             parent_results.append(parent.predict(input_data=input_data))
         else:
             raise NotImplementedError()

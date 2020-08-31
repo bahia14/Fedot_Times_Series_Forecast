@@ -85,12 +85,13 @@ class Model:
 
         return prediction
 
-    def fine_tune(self, data: InputData, iterations: int,
+    def fine_tune(self, data: InputData, chain, iterations: int,
                   max_lead_time: timedelta = timedelta(minutes=5)):
         self._init(data.task)
 
         try:
             fitted_model, tuned_params = self._eval_strategy.fit_tuned(train_data=data,
+                                                                       chain=chain,
                                                                        iterations=iterations,
                                                                        max_lead_time=max_lead_time)
             self.params = tuned_params

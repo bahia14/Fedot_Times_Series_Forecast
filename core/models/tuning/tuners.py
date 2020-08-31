@@ -8,6 +8,8 @@ from sklearn.metrics import make_scorer, mean_squared_error, mean_squared_error 
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from skopt import BayesSearchCV
 
+from core.composer.chain import Chain
+from core.composer.node import PrimaryNode, SecondaryNode
 from core.composer.timer import TunerTimer
 from core.models.data import InputData, train_test_data_setup
 from core.models.tuning.hyperparams import flo_params_range_by_model, params_range_by_model
@@ -33,7 +35,7 @@ class Tuner:
             make_scorer(mean_squared_error, greater_is_better=False),
     }
 
-    def __init__(self, trained_model, tune_data: InputData,
+    def __init__(self, trained_model, tune_data: InputData, chain,
                  params_range: dict,
                  cross_val_fold_num: int,
                  time_limit,
@@ -46,8 +48,9 @@ class Tuner:
         self.cross_val_fold_num = cross_val_fold_num
         self.scorer = self.__tuning_metric_by_type.get(self.tune_data.task.task_type, None)
         self.max_iterations = iterations
+        self.chain = chain
         self.default_score, self.default_params = \
-            self.get_cross_val_score_and_params(self.trained_model)
+            self.get_cross_val_score_and_params(self.trained_model, chain)
 
     def tune(self) -> Union[Tuple[dict, object], Tuple[None, None]]:
         raise NotImplementedError()
@@ -66,7 +69,7 @@ class Tuner:
     def is_better_than_default(self, score):
         return self.is_score_better(self.default_score, score)
 
-    def get_cross_val_score_and_params(self, model):
+    def get_cross_val_score_and_params_test(self, model):
         balanced_features, balanced_target = RandomUnderSampler(sampling_strategy=0.5). \
             fit_resample(self.tune_data.features, self.tune_data.target)
 
@@ -91,9 +94,6 @@ class Tuner:
         test_data = InputData.from_csv(test_file_path)
         # scaler = Scaling().fit(train_data.features)
         # features = scaler.apply(train_data.features)
-
-        from core.composer.chain import Chain
-        from core.composer.node import PrimaryNode, SecondaryNode
 
         def get_simple_chain():
             first = PrimaryNode(model_type='knn')
@@ -128,7 +128,7 @@ class Tuner:
 
         return score, params
 
-    def get_cross_val_score_and_params2(self, model):
+    def get_cross_val_score_and_params(self, model, chain):
         balanced_features, balanced_target = RandomUnderSampler(sampling_strategy=0.5). \
             fit_resample(self.tune_data.features, self.tune_data.target)
 
@@ -140,29 +140,39 @@ class Tuner:
 
         # balanced_features = np.asarray(balanced_features)
         # balanced_target = np.asarray(balanced_target)
-        from core.models.preprocessing import Scaling
 
         from sklearn.metrics import roc_auc_score as roc_auc
 
-        from core.models.data import InputData
+        # train_file_path, test_file_path = get_scoring_case_data_paths()
 
-        from benchmark.benchmark_utils import get_scoring_case_data_paths
+        # train_data = InputData.from_csv(train_file_path)
+        # test_data = InputData.from_csv(test_file_path)
 
-        train_file_path, test_file_path = get_scoring_case_data_paths()
+        params = model.get_params()
 
-        train_data = InputData.from_csv(train_file_path)
-        test_data = InputData.from_csv(test_file_path)
-        scaler = Scaling().fit(train_data.features)
-        features = scaler.apply(train_data.features)
+        for node in [_ for _ in chain.nodes if isinstance(_, PrimaryNode)]:
+            if str(node.model) == str(model):
+                node.model.params = params
 
-        model.fit(features, train_data.target)
-        features = scaler.apply(test_data.features)
+        chain.fit_from_scratch(self.tune_data)
 
-        after_tuning_predicted = model.predict_proba(features)
+        after_tuning_predicted = chain.predict(self.tune_data).predict
 
         # Metrics
-        score = roc_auc(y_true=test_data.target,
-                        y_score=after_tuning_predicted[:, 1])
+        score = roc_auc(y_true=self.tune_data.target,
+                        y_score=after_tuning_predicted)
+
+        # scaler = Scaling().fit(train_data.features)
+        # features = scaler.apply(train_data.features)
+
+        # model.fit(features, train_data.target)
+        # features = scaler.apply(test_data.features)
+
+        # after_tuning_predicted = model.predict_proba(features)
+
+        # Metrics
+        # score = roc_auc(y_true=test_data.target,
+        #                y_score=after_tuning_predicted[:, 1])
 
         # score = abs(cross_val_score(model, balanced_features,
         #                            balanced_target, scoring=self.scorer,
@@ -192,7 +202,7 @@ class SklearnTuner(Tuner):
     def _sklearn_tune(self, tune_data: InputData):
         try:
             search = self.search_strategy.fit(tune_data.features, tune_data.target.ravel())
-            new_score, _ = self.get_cross_val_score_and_params(search.best_estimator_)
+            new_score, _ = self.get_cross_val_score_and_params(search.best_estimator_, self.chain)
             if self.is_better_than_default(new_score):
                 return search.best_params_, search.best_estimator_
             else:
@@ -236,11 +246,11 @@ class SklearnCustomRandomTuner(Tuner):
         try:
             with TunerTimer() as timer:
                 best_model = self.trained_model
-                best_score, best_params = self.get_cross_val_score_and_params(best_model)
+                best_score, best_params = self.get_cross_val_score_and_params(best_model, self.chain)
                 for iteration in range(self.max_iterations):
                     params = {k: nprand_choice(v) for k, v in self.params_range.items()}
                     self.trained_model.set_params(**params)
-                    score, _ = self.get_cross_val_score_and_params(self.trained_model)
+                    score, _ = self.get_cross_val_score_and_params(self.trained_model, self.chain)
                     if self.is_score_better(previous=best_score, current=score):
                         best_params = params
                         best_model = self.trained_model

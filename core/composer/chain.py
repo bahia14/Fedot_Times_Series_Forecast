@@ -57,7 +57,18 @@ class Chain:
 
         all_primary_nodes = [node for node in self.nodes if isinstance(node, PrimaryNode)]
         for node in all_primary_nodes:
-            node.fine_tune(input_data, max_lead_time=max_lead_time, iterations=iterations)
+            node.fine_tune(self, input_data, max_lead_time=max_lead_time, iterations=iterations)
+
+        if verbose:
+            print('End tuning')
+
+    def fine_tune_root_node(self, input_data: InputData, iterations: int = 30,
+                            max_lead_time: timedelta = timedelta(minutes=5),
+                            verbose=False):
+        if verbose:
+            print('Start tuning of root node ')
+
+        self.root_node.fine_tune(chain=self, input_data=input_data, max_lead_time=max_lead_time, iterations=iterations)
 
         if verbose:
             print('End tuning')
