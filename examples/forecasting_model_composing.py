@@ -6,9 +6,8 @@ from sklearn.metrics import mean_squared_error as mse
 
 from fedot.core.chains.chain import Chain
 from fedot.core.chains.node import PrimaryNode, SecondaryNode
-from fedot.core.composer.gp_composer.fixed_structure_composer import FixedStructureComposerBuilder
+from fedot.core.chains.ts_chain import TsForecastingChain
 from fedot.core.composer.gp_composer.gp_composer import GPComposerRequirements
-from fedot.core.composer.visualisation import ComposerVisualiser
 from fedot.core.data.data import InputData, OutputData
 from fedot.core.repository.dataset_types import DataTypesEnum
 from fedot.core.repository.quality_metrics_repository import MetricsRepository, RegressionMetricsEnum
@@ -88,8 +87,7 @@ def run_metocean_forecasting_problem(train_file_path, test_file_path, forecast_l
     available_model_types_primary = ['trend_data_model',
                                      'residual_data_model']
 
-    available_model_types_secondary = ['rfr', 'linear',
-                                       'ridge', 'lasso']
+    available_model_types_secondary = ['linear', 'ridge', 'lasso', 'rfr', 'dtreg', 'knnreg', 'svr']
 
     composer_requirements = GPComposerRequirements(
         primary=available_model_types_primary,
@@ -98,23 +96,28 @@ def run_metocean_forecasting_problem(train_file_path, test_file_path, forecast_l
         crossover_prob=0, mutation_prob=0.8,
         max_lead_time=datetime.timedelta(minutes=20))
 
-    builder = FixedStructureComposerBuilder(task=task_to_solve).with_requirements(composer_requirements).with_metrics(
-        metric_function).with_initial_chain(ref_chain)
-    composer = builder.build()
+    # builder = FixedStructureComposerBuilder(task=task_to_solve).with_requirements(composer_requirements).with_metrics(
+    #    metric_function).with_initial_chain(ref_chain)
+    # composer = builder.build()
 
-    chain = composer.compose_chain(data=dataset_to_train,
-                                   is_visualise=False)
+    # for model in available_model_types_secondary:
 
-    if with_visualisation:
-        ComposerVisualiser.visualise(chain)
+    # chain = composer.compose_chain(data=dataset_to_train,
+    #                               is_visualise=False)
 
-    chain.fit(input_data=dataset_to_train, verbose=False)
-    rmse_on_valid = calculate_validation_metric(
-        chain.predict(dataset_to_validate), dataset_to_validate,
-        f'full-composite_{forecast_length}',
-        is_visualise=with_visualisation)
+    # if with_visualisation:
+    #    ComposerVisualiser.visualise(chain)
 
-    print(f'RMSE composite: {rmse_on_valid}')
+    for model in available_model_types_secondary:
+        chain = TsForecastingChain(PrimaryNode(model))
+
+        chain.fit(input_data=dataset_to_train, verbose=False)
+        rmse_on_valid = calculate_validation_metric(
+            chain.predict(dataset_to_validate), dataset_to_validate,
+            f'full-composite_{forecast_length}',
+            is_visualise=with_visualisation)
+
+        print(f'{model}, RMSE: {round(rmse_on_valid, 3)}')
 
     return rmse_on_valid
 
@@ -130,4 +133,5 @@ if __name__ == '__main__':
     file_path_test = 'cases/data/metocean/metocean_data_test.csv'
     full_path_test = os.path.join(str(project_root()), file_path_test)
 
-    run_metocean_forecasting_problem(full_path_train, full_path_test, forecast_length=1)
+    run_metocean_forecasting_problem(full_path_train, full_path_test, forecast_length=48,
+                                     with_visualisation=False)
