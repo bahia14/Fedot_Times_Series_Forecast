@@ -116,7 +116,7 @@ def run_metocean_forecasting_problem(train_file_path, test_file_path, forecast_l
     multiscale_chain.fit(input_data=dataset_to_train, verbose=False)
     calculate_validation_metric(
         multiscale_chain.predict(dataset_to_validate), dataset_to_validate,
-        is_visualise=with_visualisation, label='Fixed composite')
+        is_visualise=with_visualisation, label='Fixed multiscale')
 
     # static all-in-one ensemble chain
     ens_chain = get_ensemble_chain()
