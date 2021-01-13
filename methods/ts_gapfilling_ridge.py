@@ -1,12 +1,11 @@
 import numpy as np
 from scipy import interpolate
 
-from fedot.core.chains.node import PrimaryNode, SecondaryNode
+from fedot.core.chains.node import PrimaryNode
 from fedot.core.chains.ts_chain import TsForecastingChain
 from fedot.core.data.data import InputData
 from fedot.core.repository.dataset_types import DataTypesEnum
 from fedot.core.repository.tasks import Task, TaskTypesEnum, TsForecastingParams
-
 
 
 # Расчет метрики - cредняя абсолютная процентная ошибка
@@ -19,7 +18,7 @@ def mean_absolute_percentage_error(y_true, y_pred):
     for index in zero_indexes:
         y_true[index] = 0.001
     value = np.mean(np.abs((y_true - y_pred) / y_true)) * 100
-    return(value)
+    return (value)
 
 
 class SimpleGapFiller:
@@ -284,7 +283,6 @@ class ModelGapFiller(SimpleGapFiller):
             weights = []
             # Two predictions are generated for each gap - forward and backward
             for direction_function in [forward, inverse]:
-
                 weights_list, predicted_list = direction_function(output_data,
                                                                   batch_index,
                                                                   new_gap_list)
@@ -377,14 +375,10 @@ class ModelGapFiller(SimpleGapFiller):
 from sklearn.metrics import mean_absolute_error, mean_squared_error, median_absolute_error
 from matplotlib import pyplot as plt
 import pandas as pd
-import timeit
 import os
-from scipy import stats
-import statsmodels.api as sm
-import pylab
 
-def validate(parameter, mask, data, withoutgap_arr, gap_value = -100.0):
 
+def validate(parameter, mask, data, withoutgap_arr, gap_value=-100.0):
     # Исходный массив
     arr_parameter = np.array(data[parameter])
     # Масссив с пропуском
@@ -428,7 +422,6 @@ def validate(parameter, mask, data, withoutgap_arr, gap_value = -100.0):
     plt.show()
 
 
-
 folder_to_save = 'D:/iccs_article/fedot_ridge_100'
 
 if __name__ == '__main__':
@@ -446,12 +439,15 @@ if __name__ == '__main__':
         # Заполнение пропусков
         gapfiller = ModelGapFiller(gap_value=-100.0,
                                    chain=chain)
-        with_gap_array = np.array(data['gap'])
+        with_gap_array = np.array(data['Height'])
+        with_gap_array[3000:3500] = -100
+        data['gap'] = with_gap_array
+
         withoutgap_arr = gapfiller.forward_filling(with_gap_array,
-                                                   max_window_size=100)
+                                                   max_window_size=80)
 
         dataframe['gap'] = withoutgap_arr
-        validate(parameter = 'Height', mask = 'gap', data = data, withoutgap_arr = withoutgap_arr)
+        validate(parameter='Height', mask='gap', data=data, withoutgap_arr=withoutgap_arr)
 
         save_path = os.path.join(folder_to_save, file)
         # Create folder if it doesnt exists

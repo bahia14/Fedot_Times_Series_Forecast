@@ -1,15 +1,12 @@
+import datetime
+
 import numpy as np
 from scipy import interpolate
 
 from fedot.core.chains.node import PrimaryNode, SecondaryNode
 from fedot.core.chains.ts_chain import TsForecastingChain
+from fedot.core.composer.gp_composer.gp_composer import GPComposerBuilder, GPComposerRequirements
 from fedot.core.data.data import InputData
-from fedot.core.repository.dataset_types import DataTypesEnum
-from fedot.core.repository.tasks import Task, TaskTypesEnum, TsForecastingParams
-
-import datetime
-from fedot.core.composer.gp_composer.fixed_structure_composer import FixedStructureComposerBuilder
-from fedot.core.composer.gp_composer.gp_composer import GPComposerRequirements
 from fedot.core.repository.dataset_types import DataTypesEnum
 from fedot.core.repository.quality_metrics_repository import MetricsRepository, RegressionMetricsEnum
 from fedot.core.repository.tasks import Task, TaskTypesEnum, TsForecastingParams
@@ -275,6 +272,7 @@ class ModelGapFiller(SimpleGapFiller):
 
             predicted_values = np.flip(predicted_values)
             weights_list = np.arange(1, (len_gap + 1), 1)
+            weights_list[0:int(round(len(weights_list)) * 0.75)] = 0
             return weights_list, predicted_values
 
         output_data = np.array(input_data)
@@ -367,25 +365,24 @@ class ModelGapFiller(SimpleGapFiller):
 
         metric_function = MetricsRepository().metric_by_id(RegressionMetricsEnum.RMSE)
 
-        available_model_types_primary = ['linear', 'lasso', 'ridge',
-                                         'trend_data_model', 'residual_data_model']
-
-        available_model_types_secondary = ['rfr', 'linear', 'knnreg', 'gbr',
-                                           'ridge', 'lasso', 'svr']
+        available_model_types = ['linear', 'ridge', 'lasso', 'rfr', 'dtreg', 'knnreg']
 
         composer_requirements = GPComposerRequirements(
-            primary=available_model_types_primary,
-            secondary=available_model_types_secondary, max_arity=3,
-            max_depth=4, pop_size=5, num_of_generations=5,
-            crossover_prob=0.1, mutation_prob=0.8,
-            max_lead_time=datetime.timedelta(minutes=20))
+            primary=available_model_types,
+            secondary=available_model_types, max_arity=5,
+            max_depth=2, pop_size=10, num_of_generations=10,
+            crossover_prob=0.8, mutation_prob=0.8,
+            max_lead_time=datetime.timedelta(minutes=1),
+            add_single_model_chains=True)
 
-        builder = FixedStructureComposerBuilder(task=task).with_requirements(composer_requirements)\
-            .with_metrics(metric_function).with_initial_chain(self.chain)
+        builder = GPComposerBuilder(task=task).with_requirements(composer_requirements) \
+            .with_metrics(metric_function)
         composer = builder.build()
 
         obtained_chain = composer.compose_chain(data=input_data,
-                                       is_visualise=False)
+                                                is_visualise=False)
+
+        print([str(_) for _ in obtained_chain.nodes])
 
         # Making predictions for the missing part in the time series
         obtained_chain.__class__ = TsForecastingChain
@@ -409,11 +406,8 @@ class ModelGapFiller(SimpleGapFiller):
 from sklearn.metrics import mean_absolute_error, mean_squared_error, median_absolute_error
 from matplotlib import pyplot as plt
 import pandas as pd
-import timeit
 import os
-from scipy import stats
-import statsmodels.api as sm
-import pylab
+
 
 def validate(parameter, mask, data, withoutgap_arr, gap_value = -100.0):
 
@@ -491,12 +485,15 @@ if __name__ == '__main__':
         # Заполнение пропусков
         gapfiller = ModelGapFiller(gap_value=-100.0,
                                    chain=chain)
-        with_gap_array = np.array(data['gap'])
+        # with_gap_array = np.array(data['gap'])
+        with_gap_array = np.array(data['Height'])
+        with_gap_array[3000:3500] = -100
+        data['gap'] = with_gap_array
         withoutgap_arr = gapfiller.forward_filling(with_gap_array,
-                                                   max_window_size=30)
+                                                   max_window_size=80)
 
         dataframe['gap'] = withoutgap_arr
-        validate(parameter = 'Height', mask = 'gap', data = data, withoutgap_arr = withoutgap_arr)
+        validate(parameter='Height', mask='gap', data=data, withoutgap_arr=withoutgap_arr)
 
         save_path = os.path.join(folder_to_save, file)
         # Create folder if it doesnt exists
