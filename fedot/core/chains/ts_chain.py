@@ -30,13 +30,9 @@ class TsForecastingChain(Chain):
 
         supplementary_data_for_forecast = copy(supplementary_data)
         supplementary_data_for_forecast.task.task_params.make_future_prediction = True
-        # if forecast_length > 1:
-        supplementary_data_for_forecast.task.task_params.return_all_steps = False
 
         initial_data_for_forecast = copy(initial_data)
         initial_data_for_forecast.task.task_params.make_future_prediction = True
-        # if forecast_length > 1:
-        initial_data_for_forecast.task.task_params.return_all_steps = False
 
         # check if predict features contains additional (exogenous) variables
         with_exog = supplementary_data_for_forecast.features is not None
@@ -73,9 +69,9 @@ class TsForecastingChain(Chain):
                     data_for_forecast.features = data_for_forecast.target
                 else:
                     data_for_forecast = supplementary_data.subset(forecast_step * forecast_length,
-                                                                  ((forecast_step + 1) * forecast_length))
-
-            data_for_forecast.idx = _extend_idx_for_prediction(data_for_forecast.idx, forecast_length)
+                                                                  ((forecast_step + 1) * forecast_length) - 1)
+            if not is_sequential:
+                data_for_forecast.idx = _extend_idx_for_prediction(data_for_forecast.idx, forecast_length)
 
         full_prediction = full_prediction[0:len(supplementary_data_for_forecast.idx)]
 

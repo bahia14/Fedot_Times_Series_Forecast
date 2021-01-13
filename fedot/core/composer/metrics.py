@@ -39,7 +39,7 @@ class QualityMetric:
                 chain.__class__ = TsForecastingChain
                 initial = reference_data.subset(0, windows_size - 1)
                 reference_data = reference_data.subset(windows_size, len(reference_data.idx))
-                results = chain.forecast(initial, reference_data, sequential=True)
+                results = chain.forecast(initial, reference_data, is_sequential=True)
             else:
                 results = chain.predict(reference_data)
 

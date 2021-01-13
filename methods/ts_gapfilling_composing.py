@@ -369,10 +369,10 @@ class ModelGapFiller(SimpleGapFiller):
 
         composer_requirements = GPComposerRequirements(
             primary=available_model_types,
-            secondary=available_model_types, max_arity=5,
-            max_depth=2, pop_size=10, num_of_generations=10,
+            secondary=available_model_types, max_arity=3,
+            max_depth=1, pop_size=10, num_of_generations=10,
             crossover_prob=0.8, mutation_prob=0.8,
-            max_lead_time=datetime.timedelta(minutes=15),
+            max_lead_time=datetime.timedelta(minutes=5),
             add_single_model_chains=True)
 
         builder = GPComposerBuilder(task=task).with_requirements(composer_requirements) \
