@@ -6,6 +6,7 @@ import numpy as np
 from sklearn.metrics import f1_score, mean_squared_error, roc_auc_score
 
 from fedot.core.chains.chain import Chain
+from fedot.core.chains.ts_chain import TsForecastingChain
 from fedot.core.data.data import InputData, OutputData
 from fedot.core.repository.tasks import TaskTypesEnum
 
@@ -32,7 +33,15 @@ class QualityMetric:
     def get_value(cls, chain: Chain, reference_data: InputData) -> float:
         metric = cls.default_value
         try:
-            results = chain.predict(reference_data)
+            if reference_data.task.task_type == TaskTypesEnum.ts_forecasting and \
+                    reference_data.task.task_params.make_future_prediction:
+                windows_size = reference_data.task.task_params.max_window_size
+                chain.__class__ = TsForecastingChain
+                initial = reference_data.subset(0, windows_size - 1)
+                reference_data = reference_data.subset(windows_size, len(reference_data.idx))
+                results = chain.forecast(initial, reference_data, sequential=True)
+            else:
+                results = chain.predict(reference_data)
 
             if reference_data.task.task_type == TaskTypesEnum.ts_forecasting:
                 new_reference_data = copy(reference_data)

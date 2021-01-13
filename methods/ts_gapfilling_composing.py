@@ -372,7 +372,7 @@ class ModelGapFiller(SimpleGapFiller):
             secondary=available_model_types, max_arity=5,
             max_depth=2, pop_size=10, num_of_generations=10,
             crossover_prob=0.8, mutation_prob=0.8,
-            max_lead_time=datetime.timedelta(minutes=1),
+            max_lead_time=datetime.timedelta(minutes=15),
             add_single_model_chains=True)
 
         builder = GPComposerBuilder(task=task).with_requirements(composer_requirements) \
@@ -490,7 +490,7 @@ if __name__ == '__main__':
         with_gap_array[3000:3500] = -100
         data['gap'] = with_gap_array
         withoutgap_arr = gapfiller.forward_filling(with_gap_array,
-                                                   max_window_size=80)
+                                                   max_window_size=30)
 
         dataframe['gap'] = withoutgap_arr
         validate(parameter='Height', mask='gap', data=data, withoutgap_arr=withoutgap_arr)

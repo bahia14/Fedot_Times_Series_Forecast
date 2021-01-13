@@ -444,7 +444,7 @@ if __name__ == '__main__':
         data['gap'] = with_gap_array
 
         withoutgap_arr = gapfiller.forward_filling(with_gap_array,
-                                                   max_window_size=80)
+                                                   max_window_size=30)
 
         dataframe['gap'] = withoutgap_arr
         validate(parameter='Height', mask='gap', data=data, withoutgap_arr=withoutgap_arr)

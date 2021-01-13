@@ -9,7 +9,8 @@ from fedot.core.repository.tasks import TaskTypesEnum
 
 class TsForecastingChain(Chain):
 
-    def forecast(self, initial_data: InputData, supplementary_data: InputData) -> OutputData:
+    def forecast(self, initial_data: InputData, supplementary_data: InputData,
+                 is_sequential=False) -> OutputData:
         """Generates the time series forecast with a sliding window using pre-fitted chain.
         :param initial_data: the initial condition for the forecasting (should be greater or equals to max_window_size)
         :param supplementary_data: the data that should be available during the forecast:
@@ -66,9 +67,13 @@ class TsForecastingChain(Chain):
                                                            stepwise_prediction,
                                                            forecast_step, forecast_length)
             else:
-                predicted_ts = np.append(data_for_forecast.target, stepwise_prediction)
-                data_for_forecast.target = np.stack(predicted_ts)
-                data_for_forecast.features = data_for_forecast.target
+                if not is_sequential:
+                    predicted_ts = np.append(data_for_forecast.target, stepwise_prediction)
+                    data_for_forecast.target = np.stack(predicted_ts)
+                    data_for_forecast.features = data_for_forecast.target
+                else:
+                    data_for_forecast = supplementary_data.subset(forecast_step * forecast_length,
+                                                                  ((forecast_step + 1) * forecast_length))
 
             data_for_forecast.idx = _extend_idx_for_prediction(data_for_forecast.idx, forecast_length)
 

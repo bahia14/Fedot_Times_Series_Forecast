@@ -1,6 +1,6 @@
 import os
 import warnings
-from copy import copy
+from copy import copy, deepcopy
 from dataclasses import dataclass
 from typing import List, Optional, Tuple
 
@@ -9,10 +9,10 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 
 from fedot.core.algorithms.time_series.lagged_features import prepare_lagged_ts_for_prediction
+from fedot.core.data.load_data import TextBatchLoader
 from fedot.core.data.preprocessing import ImputationStrategy
 from fedot.core.repository.dataset_types import DataTypesEnum
 from fedot.core.repository.tasks import Task, TaskTypesEnum
-from fedot.core.data.load_data import TextBatchLoader
 
 
 @dataclass
@@ -205,8 +205,8 @@ def train_test_data_setup(data: InputData, split_ratio=0.8,
     train_idx, test_idx = split_train_test(data.idx, split_ratio, with_shuffle=shuffle_flag, task=task)
     train_data = InputData(features=train_data_x, target=train_data_y,
                            idx=train_idx, task=data.task, data_type=data.data_type)
-    test_data = InputData(features=test_data_x, target=test_data_y, idx=test_idx, task=data.task,
-                          data_type=data.data_type)
+    test_data = InputData(features=test_data_x, target=test_data_y, idx=test_idx, task=deepcopy(data.task),
+                          data_type=deepcopy(data.data_type))
     return train_data, test_data
 
 
