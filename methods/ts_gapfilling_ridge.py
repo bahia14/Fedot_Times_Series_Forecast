@@ -434,7 +434,7 @@ if __name__ == '__main__':
         dataframe = data.copy()
 
         # Цепочка из одной модели
-        chain = TsForecastingChain(PrimaryNode('ridge'))
+        chain = TsForecastingChain(PrimaryNode('rfr'))
 
         # Заполнение пропусков
         gapfiller = ModelGapFiller(gap_value=-100.0,

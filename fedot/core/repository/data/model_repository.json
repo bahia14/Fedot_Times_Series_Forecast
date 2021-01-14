@@ -56,8 +56,8 @@
 	},
 	"dim_red_data_model": {
 	  "tasks": "[TaskTypesEnum.classification, TaskTypesEnum.regression]",
-	  "input_type": "[DataTypesEnum.table]",
-	  "output_type": "[DataTypesEnum.table]",
+	  "input_type": "[DataTypesEnum.table, DataTypesEnum.ts_lagged_table]",
+	  "output_type": "[DataTypesEnum.table, DataTypesEnum.ts_lagged_table]",
 	  "strategies": ["fedot.core.models.evaluation.data_evaluation", "DataModellingStrategy"],
 	  "tags": ["without_preprocessing", "data_model"],
 	  "description": "Implementations of the models for the feature preprocessing (dimensionality reduction, etc)"

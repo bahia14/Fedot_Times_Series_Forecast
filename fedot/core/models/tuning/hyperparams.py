@@ -77,5 +77,8 @@ params_range_by_model = {
         'min_samples_split': range(2, 21),
         'min_samples_leaf': range(1, 21),
         'bootstrap': [True, False]
+    },
+    'ridge': {
+        'alpha': np.arange(0.05, 1.01, 0.05)
     }
 }

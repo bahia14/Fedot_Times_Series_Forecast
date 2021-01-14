@@ -358,6 +358,7 @@ class ModelGapFiller(SimpleGapFiller):
                                data_type=DataTypesEnum.ts)
 
         # Making predictions for the missing part in the time series
+        # self.chain.fine_tune_primary_nodes(input_data)
         self.chain.fit_from_scratch(input_data)
 
         # "Test data" for making prediction for a specific length
@@ -435,7 +436,8 @@ if __name__ == '__main__':
         dataframe = data.copy()
 
         # Цепочка из одной модели
-        chain = TsForecastingChain(PrimaryNode('ridge'))
+        # node2 = SecondaryNode('rfr', nodes_from=[node])
+        chain = TsForecastingChain(PrimaryNode('rfr'))
 
         # Заполнение пропусков
         gapfiller = ModelGapFiller(gap_value=-100.0,
