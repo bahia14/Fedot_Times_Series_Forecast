@@ -29,18 +29,18 @@ def calculate_validation_metric(chain: Chain, dataset_to_validate: InputData) ->
 
 
 def run_credit_scoring_problem(train_file_path, test_file_path,
-                               max_lead_time: datetime.timedelta = datetime.timedelta(minutes=5),
+                               max_lead_time: datetime.timedelta = datetime.timedelta(minutes=180),
                                is_visualise=False,
                                with_tuning=False):
     task = Task(TaskTypesEnum.classification)
-    dataset_to_compose = InputData.from_csv(train_file_path, task=task)
-    dataset_to_validate = InputData.from_csv(test_file_path, task=task)
+    dataset_to_compose = InputData.from_csv(train_file_path, task=task, target_column='SeriousDlqin2yrs')
+    dataset_to_validate = InputData.from_csv(test_file_path, task=task, target_column='SeriousDlqin2yrs')
 
     # the search of the models provided by the framework that can be used as nodes in a chain for the selected task
     available_model_types, _ = ModelTypesRepository().suitable_model(task_type=task.task_type)
 
     # the choice of the metric for the chain quality assessment during composition
-    metric_function = MetricsRepository().metric_by_id(ClassificationMetricsEnum.ROCAUC_penalty)
+    metric_function = MetricsRepository().metric_by_id(ClassificationMetricsEnum.ROCAUC)
 
     # the choice and initialisation of the GP search
     composer_requirements = GPComposerRequirements(
@@ -67,9 +67,11 @@ def run_credit_scoring_problem(train_file_path, test_file_path,
     if with_tuning:
         chain_evo_composed.fine_tune_primary_nodes(input_data=dataset_to_compose,
                                                    iterations=50, verbose=True)
-
     chain_evo_composed.fit(input_data=dataset_to_compose, verbose=True)
-
+    try:
+        chain_evo_composed.save_chain('result.json')
+    except Exception as ex:
+        print(ex)
     if is_visualise:
         visualiser = ChainVisualiser()
 
@@ -96,11 +98,11 @@ if __name__ == '__main__':
 
     # a dataset that will be used as a train and test set during composition
 
-    file_path_train = 'cases/data/scoring/scoring_train.csv'
+    file_path_train = 'cases/data/scoring/cs-training.csv'
     full_path_train = os.path.join(str(project_root()), file_path_train)
 
     # a dataset for a final validation of the composed model
-    file_path_test = 'cases/data/scoring/scoring_test.csv'
+    file_path_test = 'cases/data/scoring/cs-test.csv'
     full_path_test = os.path.join(str(project_root()), file_path_test)
 
     run_credit_scoring_problem(full_path_train, full_path_test, is_visualise=True)
