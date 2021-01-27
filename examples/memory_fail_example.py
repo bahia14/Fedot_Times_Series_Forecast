@@ -50,7 +50,8 @@ def run_credit_scoring_problem(train_file_path, test_file_path,
     dataset_to_validate = classification_dataset_with_redunant_features(n_samples=100000, n_features=10)
 
     # the search of the models provided by the framework that can be used as nodes in a chain for the selected task
-    available_model_types = ['logit']  # , _ = ModelTypesRepository().suitable_model(task_type=task.task_type)
+    available_model_types = ['logit', 'xgboost', 'knn',
+                             'dt']  # , _ = ModelTypesRepository().suitable_model(task_type=task.task_type)
 
     # the choice of the metric for the chain quality assessment during composition
     metric_function = MetricsRepository().metric_by_id(ClassificationMetricsEnum.ROCAUC)
