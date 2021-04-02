@@ -1,8 +1,10 @@
 import datetime
+from typing import Optional
 
 import numpy as np
 import pandas as pd
 
+from fedot.core.chains.chain import Chain
 from fedot.core.composer.gp_composer.gp_composer import GPComposerBuilder, GPComposerRequirements
 from fedot.core.data.data import InputData, OutputData
 from fedot.core.log import Log
@@ -84,7 +86,8 @@ def compose_fedot_model(train_data: InputData,
                         learning_time: float = 5,
                         available_model_types: list = None,
                         with_tuning=False,
-                        metric=None
+                        metric=None,
+                        initial_chain: Optional[Chain] = None
                         ):
     # the choice of the metric for the chain quality assessment during composition
     if metric is None:
@@ -119,6 +122,10 @@ def compose_fedot_model(train_data: InputData,
     # Create GP-based composer
     builder = GPComposerBuilder(task).with_requirements(composer_requirements). \
         with_metrics(metric_function).with_logger(logger)
+
+    if initial_chain:
+        builder.with_initial_chain(initial_chain)
+
     gp_composer = builder.build()
 
     logger.message('Model composition started')
