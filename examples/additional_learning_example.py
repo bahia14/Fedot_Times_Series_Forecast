@@ -11,7 +11,8 @@ def run_additional_learning_example():
 
     problem = 'classification'
 
-    auto_model = Fedot(problem=problem, seed=42, preset='light')
+    auto_model = Fedot(problem=problem, seed=42, preset='light',
+                       composer_params={'initial_chain': Chain(PrimaryNode('logit '))})
     auto_model.fit(features=train_data_path, target='target')
     auto_model.predict_proba(features=test_data_path)
     print('auto_model', auto_model.get_metrics())
