@@ -1,20 +1,20 @@
 import datetime
-import numpy as np
 import os
-import random
+from copy import deepcopy
+from functools import partial
 
 from deap import tools
-from functools import partial
 
 from fedot.core.chains.chain import Chain
 from fedot.core.chains.node import PrimaryNode, SecondaryNode
+from fedot.core.composer.constraint import constraint_function
 from fedot.core.composer.gp_composer.gp_composer import GPComposerRequirements, GPComposerBuilder
 from fedot.core.composer.gp_composer.gp_composer import sample_split_ration_for_tasks, ChainGenerationParams
 from fedot.core.composer.optimisers.gp_comp.gp_operators import nodes_from_height, evaluate_individuals, \
     filter_duplicates
-from fedot.core.composer.constraint import constraint_function
 from fedot.core.composer.optimisers.gp_comp.operators.crossover import crossover, CrossoverTypesEnum
 from fedot.core.composer.optimisers.gp_comp.operators.mutation import mutation, MutationTypesEnum
+from fedot.core.composer.optimisers.utils.multi_objective_fitness import MultiObjFitness
 from fedot.core.composer.timer import CompositionTimer
 from fedot.core.data.data import InputData, train_test_data_setup
 from fedot.core.log import default_log
@@ -22,8 +22,6 @@ from fedot.core.repository.operation_types_repository import OperationTypesRepos
 from fedot.core.repository.quality_metrics_repository import ClassificationMetricsEnum
 from fedot.core.repository.tasks import Task, TaskTypesEnum
 from fedot.core.utils import project_root
-from fedot.core.composer.optimisers.utils.multi_objective_fitness import MultiObjFitness
-
 from test.unit.chains.test_node_cache import chain_first, chain_second, chain_third, chain_fourth, chain_fifth
 
 
@@ -152,3 +150,61 @@ def test_mutation():
     assert not constraint_function(chain)
     new_chain = mutation(mutation_types, chain_gener_params, chain, composer_requirements, log=log, max_depth=3)
     assert new_chain == chain
+
+
+def test_mutation_for_linear_chain():
+    linear_two_nodes = Chain(SecondaryNode('logit', nodes_from=[PrimaryNode('scaling')]))
+    linear_three_nodes_inner = Chain(SecondaryNode('logit', nodes_from=[SecondaryNode('onehot',
+                                                                                      nodes_from=[
+                                                                                          PrimaryNode('scaling')])
+                                                                        ]))
+    linear_three_nodes_outer = Chain(SecondaryNode('logit', nodes_from=[SecondaryNode('scaling',
+                                                                                      nodes_from=[
+                                                                                          PrimaryNode('onehot')])
+                                                                        ]))
+
+    composer_requirements = GPComposerRequirements(primary=['scaling', 'onehot'],
+                                                   secondary=['onehot', 'logit', 'ridge'], mutation_prob=1)
+
+    successful_mutation_inner = False
+    successful_mutation_outer = False
+    for _ in range(100):
+        chain_after_mutation = mutation(types=[MutationTypesEnum.growth],
+                                        chain_generation_params=ChainGenerationParams(),
+                                        chain=linear_two_nodes, requirements=composer_requirements,
+                                        log=default_log(__name__), max_depth=3)
+        if not successful_mutation_inner:
+            successful_mutation_inner = chain_after_mutation == linear_three_nodes_inner
+        if not successful_mutation_outer:
+            successful_mutation_outer = chain_after_mutation == linear_three_nodes_outer
+
+        if successful_mutation_inner and successful_mutation_outer:
+            break
+
+    assert successful_mutation_outer
+    assert successful_mutation_inner
+
+
+def test_mutation_for_graph_chain():
+    graph_chain = chain_example()
+    graph_chain_with_link = deepcopy(graph_chain)
+    graph_chain_with_link.nodes[2].nodes_from.append(graph_chain_with_link.nodes[3])
+    graph_chain.show()
+    graph_chain_with_link.show()
+
+    composer_requirements = GPComposerRequirements(primary=['xgboost', 'knn', 'lda', 'qda'],
+                                                   secondary=['xgboost', 'knn', 'lda', 'qda'], mutation_prob=1)
+
+    successful_mutation = False
+    for _ in range(100):
+        chain_after_mutation = mutation(types=[MutationTypesEnum.simple,
+                                               MutationTypesEnum.growth,
+                                               MutationTypesEnum.local_growth],
+                                        chain_generation_params=ChainGenerationParams(),
+                                        chain=graph_chain, requirements=composer_requirements,
+                                        log=default_log(__name__), max_depth=3)
+        success = chain_after_mutation == graph_chain_with_link
+        if success:
+            break
+
+    assert successful_mutation
