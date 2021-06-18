@@ -21,7 +21,7 @@ from fedot.core.data.data import InputData
 from fedot.core.data.data_split import train_test_data_setup
 from fedot.core.data.multi_modal import MultiModalData
 from fedot.core.log import Log, default_log
-from fedot.core.validation.cross_validation import cross_validation
+from fedot.core.validation.composer_validation import table_cross_validation
 from fedot.core.repository.operation_types_repository import OperationTypesRepository, get_operations_for_task
 from fedot.core.repository.quality_metrics_repository import ClassificationMetricsEnum, MetricsRepository, \
     RegressionMetricsEnum, MetricsEnum
@@ -124,7 +124,7 @@ class GPComposer(Composer):
             if isinstance(data, MultiModalData):
                 raise NotImplementedError('Cross-validation is not supported for multi-modal data')
             self.log.info("KFolds cross validation for chain composing was applied.")
-            metric_function_for_nodes = partial(cross_validation, data,
+            metric_function_for_nodes = partial(table_cross_validation, data,
                                                 self.composer_requirements.cv_folds, self.metrics)
         else:
             self.log.info("Hold out validation for chain composing was applied.")

@@ -6,7 +6,7 @@ from sklearn.metrics import roc_auc_score as roc_auc
 from fedot.api.main import Fedot
 from fedot.core.chains.chain import Chain
 from fedot.core.chains.node import PrimaryNode, SecondaryNode
-from fedot.core.validation.cross_validation import cross_validation
+from fedot.core.validation.composer_validation import table_cross_validation
 from fedot.core.data.data import InputData
 from fedot.core.repository.tasks import Task, TaskTypesEnum
 from fedot.core.repository.quality_metrics_repository import ClassificationMetricsEnum, ClusteringMetricsEnum
@@ -32,8 +32,8 @@ def get_data(task):
 def test_cv_multiple_metrics_evaluated_correct(classification_dataset):
     chain = sample_chain()
 
-    actual_value = cross_validation(chain=chain, reference_data=classification_dataset, cv_folds=10,
-                                    metrics=[ClassificationMetricsEnum.ROCAUC_penalty,
+    actual_value = table_cross_validation(chain=chain, reference_data=classification_dataset, cv_folds=10,
+                                          metrics=[ClassificationMetricsEnum.ROCAUC_penalty,
                                              ClassificationMetricsEnum.accuracy,
                                              ClassificationMetricsEnum.logloss])
     all_metrics_correct = all(list(map(lambda x: 0 < abs(x) <= 1, actual_value)))
