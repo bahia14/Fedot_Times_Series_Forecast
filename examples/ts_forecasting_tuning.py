@@ -173,7 +173,7 @@ def run_experiment_with_tuning(time_series, with_ar_chain=False, len_forecast=25
     print(f'RMSE after tuning - {mse_after:.4f}')
     print(f'MAE after tuning - {mae_after:.4f}\n')
 
-    chain.display_structure()
+    chain.print_structure()
     plt.plot(range(0, len(time_series)), time_series, label='Actual time series')
     plt.plot(range(len(train_data), len(time_series)), old_predicted, label='Forecast before tuning')
     plt.plot(range(len(train_data), len(time_series)), new_predicted, label='Forecast after tuning')
@@ -188,5 +188,5 @@ if __name__ == '__main__':
     time_series = np.array(df['Level'])
 
     run_experiment_with_tuning(time_series,
-                               with_ar_chain=True,
+                               with_ar_chain=False,
                                len_forecast=250)

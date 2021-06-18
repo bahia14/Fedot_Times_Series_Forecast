@@ -6,14 +6,13 @@ from sklearn.metrics import roc_auc_score as roc_auc
 from fedot.api.main import Fedot
 from fedot.core.chains.chain import Chain
 from fedot.core.chains.node import PrimaryNode, SecondaryNode
-from fedot.core.operations.cross_validation import cross_validation
+from fedot.core.validation.cross_validation import cross_validation
 from fedot.core.data.data import InputData
 from fedot.core.repository.tasks import Task, TaskTypesEnum
 from fedot.core.repository.quality_metrics_repository import ClassificationMetricsEnum, ClusteringMetricsEnum
 from fedot.core.repository.operation_types_repository import OperationTypesRepository
 from fedot.core.composer.gp_composer.gp_composer import GPComposerRequirements, GPComposerBuilder
 from cases.credit_scoring.credit_scoring_problem import get_scoring_data
-from test.unit.models.test_model import classification_dataset
 
 
 def sample_chain():
