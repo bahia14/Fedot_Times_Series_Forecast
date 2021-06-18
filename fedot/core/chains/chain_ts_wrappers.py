@@ -3,10 +3,9 @@ import numpy as np
 from fedot.core.data.data import InputData
 from fedot.core.repository.tasks import TaskTypesEnum
 from fedot.core.repository.dataset_types import DataTypesEnum
-from fedot.core.chains.chain import Chain
 
 
-def out_of_sample_ts_forecast(chain: Chain, input_data: InputData,
+def out_of_sample_ts_forecast(chain, input_data: InputData,
                               horizon: int = None) -> np.array:
     """
     Method allow make forecast with appropriate forecast length. The previously
@@ -51,7 +50,7 @@ def out_of_sample_ts_forecast(chain: Chain, input_data: InputData,
     return final_forecast
 
 
-def in_sample_ts_forecast(chain: Chain, input_data: InputData,
+def in_sample_ts_forecast(chain, input_data: InputData,
                           horizon: int = None) -> np.array:
     """
     Method allows to make in-sample forecasting. The actual values of the time

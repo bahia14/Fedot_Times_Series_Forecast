@@ -6,7 +6,6 @@ from hyperopt import fmin, tpe, space_eval
 
 from fedot.core.chains.tuning.hyperparams import get_node_params, convert_params
 from fedot.core.chains.tuning.tuner_interface import HyperoptTuner, _greater_is_better
-from fedot.core.data.data_split import train_test_data_setup
 from fedot.core.log import Log
 
 MAX_METRIC_VALUE = 10e6
@@ -27,24 +26,17 @@ class ChainTuner(HyperoptTuner):
 
         parameters_dict = self._get_parameters_for_tune(self.chain)
 
-        # Train test split
-        train_input, predict_input = train_test_data_setup(input_data)
-        test_target = np.array(predict_input.target)
-
-        is_need_to_maximize = _greater_is_better(target=test_target,
+        is_need_to_maximize = _greater_is_better(target=input_data.target,
                                                  loss_function=loss_function,
                                                  loss_params=loss_params)
         self.is_need_to_maximize = is_need_to_maximize
 
         # Check source metrics for data
-        self.init_check(train_input, predict_input, test_target,
-                        loss_function, loss_params)
+        self.init_check(input_data, loss_function, loss_params)
 
         best = fmin(partial(self._objective,
                             chain=self.chain,
-                            train_input=train_input,
-                            predict_input=predict_input,
-                            test_target=test_target,
+                            data=input_data,
                             loss_function=loss_function,
                             loss_params=loss_params),
                     parameters_dict,
@@ -58,9 +50,7 @@ class ChainTuner(HyperoptTuner):
                                          parameters=best)
 
         # Validation is the optimization do well
-        final_chain = self.final_check(train_input=train_input,
-                                       predict_input=predict_input,
-                                       test_target=test_target,
+        final_chain = self.final_check(data=input_data,
                                        tuned_chain=tuned_chain,
                                        loss_function=loss_function,
                                        loss_params=loss_params)
@@ -111,16 +101,14 @@ class ChainTuner(HyperoptTuner):
 
         return parameters_dict
 
-    def _objective(self, parameters_dict, chain, train_input, predict_input,
-                   test_target, loss_function, loss_params: dict):
+    def _objective(self, parameters_dict, chain, data, loss_function,
+                   loss_params: dict):
         """
         Objective function for minimization / maximization problem
 
         :param parameters_dict: dictionary with operation names and parameters
         :param chain: chain to optimize
-        :param train_input: input for train chain model
-        :param predict_input: input for test chain model
-        :param test_target: target for validation
+        :param data: InputData for model train and validation
         :param loss_function: loss function to optimize
         :param loss_params: parameters for loss function
 
@@ -131,9 +119,7 @@ class ChainTuner(HyperoptTuner):
         chain = ChainTuner.set_arg_chain(chain=chain, parameters=parameters_dict)
 
         try:
-            metric_value = ChainTuner.get_metric_value(train_input=train_input,
-                                                       predict_input=predict_input,
-                                                       test_target=test_target,
+            metric_value = ChainTuner.get_metric_value(data=data,
                                                        chain=chain,
                                                        loss_function=loss_function,
                                                        loss_params=loss_params)

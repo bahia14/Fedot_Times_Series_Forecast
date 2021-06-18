@@ -24,18 +24,13 @@ class SequentialTuner(HyperoptTuner):
     def tune_chain(self, input_data, loss_function, loss_params=None):
         """ Method for hyperparameters sequential tuning """
 
-        # Train test split
-        train_input, predict_input = train_test_data_setup(input_data)
-        test_target = np.array(predict_input.target)
-
-        is_need_to_maximize = _greater_is_better(target=test_target,
+        is_need_to_maximize = _greater_is_better(target=input_data.target,
                                                  loss_function=loss_function,
                                                  loss_params=loss_params)
         self.is_need_to_maximize = is_need_to_maximize
 
         # Check source metrics for data
-        self.init_check(train_input, predict_input, test_target,
-                        loss_function, loss_params)
+        self.init_check(input_data, loss_function, loss_params)
 
         # Calculate amount of iterations we can apply per node
         nodes_amount = len(self.chain.nodes)
@@ -59,13 +54,11 @@ class SequentialTuner(HyperoptTuner):
                                           operation_name=operation_name)
 
             if node_params is None:
-                print(f'"{operation_name}" operation has no parameters to optimize')
+                self.log.info(f'"{operation_name}" operation has no parameters to optimize')
             else:
                 # Apply tuning for current node
                 self._optimize_node(node_id=node_id,
-                                    train_input=train_input,
-                                    predict_input=predict_input,
-                                    test_target=test_target,
+                                    data=input_data,
                                     node_params=node_params,
                                     iterations_per_node=iterations_per_node,
                                     seconds_per_node=seconds_per_node,
@@ -73,9 +66,7 @@ class SequentialTuner(HyperoptTuner):
                                     loss_params=loss_params)
 
         # Validation is the optimization do well
-        final_chain = self.final_check(train_input=train_input,
-                                       predict_input=predict_input,
-                                       test_target=test_target,
+        final_chain = self.final_check(data=input_data,
                                        tuned_chain=self.chain,
                                        loss_function=loss_function,
                                        loss_params=loss_params)
@@ -84,18 +75,14 @@ class SequentialTuner(HyperoptTuner):
 
     def tune_node(self, input_data, loss_function, node_index, loss_params=None):
         """ Method for hyperparameters tuning for particular node"""
-        # Train test split
-        train_input, predict_input = train_test_data_setup(input_data)
-        test_target = np.array(predict_input.target)
 
-        is_need_to_maximize = _greater_is_better(target=test_target,
+        is_need_to_maximize = _greater_is_better(target=input_data.target,
                                                  loss_function=loss_function,
                                                  loss_params=loss_params)
         self.is_need_to_maximize = is_need_to_maximize
 
         # Check source metrics for data
-        self.init_check(train_input, predict_input, test_target,
-                        loss_function, loss_params)
+        self.init_check(input_data, loss_function, loss_params)
 
         node = self.chain.nodes[node_index]
         operation_name = str(node.operation.operation_type)
@@ -105,13 +92,11 @@ class SequentialTuner(HyperoptTuner):
                                       operation_name=operation_name)
 
         if node_params is None:
-            print(f'"{operation_name}" operation has no parameters to optimize')
+            self.log.info(f'"{operation_name}" operation has no parameters to optimize')
         else:
             # Apply tuning for current node
             self._optimize_node(node_id=node_index,
-                                train_input=train_input,
-                                predict_input=predict_input,
-                                test_target=test_target,
+                                data=input_data,
                                 node_params=node_params,
                                 iterations_per_node=self.iterations,
                                 seconds_per_node=self.max_seconds,
@@ -119,9 +104,7 @@ class SequentialTuner(HyperoptTuner):
                                 loss_params=loss_params)
 
         # Validation is the optimization do well
-        final_chain = self.final_check(train_input=train_input,
-                                       predict_input=predict_input,
-                                       test_target=test_target,
+        final_chain = self.final_check(data=input_data,
                                        tuned_chain=self.chain,
                                        loss_function=loss_function,
                                        loss_params=loss_params)
@@ -140,16 +123,13 @@ class SequentialTuner(HyperoptTuner):
 
         return nodes_ids
 
-    def _optimize_node(self, node_id, train_input, predict_input, test_target,
-                       node_params, iterations_per_node, seconds_per_node,
-                       loss_function, loss_params):
+    def _optimize_node(self, node_id, data, node_params, iterations_per_node,
+                       seconds_per_node, loss_function, loss_params):
         """
         Method for node optimization
 
         :param node_id: id of the current node in the chain
-        :param train_input: input for train chain model
-        :param predict_input: input for test chain model
-        :param test_target: target for validation
+        :param data: InputData for validation
         :param node_params: dictionary with parameters for node
         :param iterations_per_node: amount of iterations to produce
         :param seconds_per_node: amount of seconds to produce
@@ -160,9 +140,7 @@ class SequentialTuner(HyperoptTuner):
         best_parameters = fmin(partial(self._objective,
                                        chain=self.chain,
                                        node_id=node_id,
-                                       train_input=train_input,
-                                       predict_input=predict_input,
-                                       test_target=test_target,
+                                       data=data,
                                        loss_function=loss_function,
                                        loss_params=loss_params),
                                node_params,
@@ -197,16 +175,13 @@ class SequentialTuner(HyperoptTuner):
 
         return chain
 
-    def _objective(self, node_params, chain, node_id, train_input, predict_input,
-                   test_target, loss_function, loss_params: dict):
+    def _objective(self, node_params, chain, node_id, data, loss_function, loss_params: dict):
         """
         Objective function for minimization / maximization problem
 
         :param node_params: dictionary with parameters for node
         :param chain: chain to optimize
-        :param train_input: input for train chain model
-        :param predict_input: input for test chain model
-        :param test_target: target for validation
+        :param data: InputData for validation
         :param loss_function: loss function to optimize
         :param loss_params: parameters for loss function
 
@@ -219,9 +194,7 @@ class SequentialTuner(HyperoptTuner):
                                              node_params=node_params)
 
         try:
-            metric_value = SequentialTuner.get_metric_value(train_input=train_input,
-                                                            predict_input=predict_input,
-                                                            test_target=test_target,
+            metric_value = SequentialTuner.get_metric_value(data=data,
                                                             chain=chain,
                                                             loss_function=loss_function,
                                                             loss_params=loss_params)
