@@ -144,7 +144,8 @@ class HyperoptTuner(ABC):
             else:
                 self.log.info(f'{prefix_init_phrase} {obtained_metric:.3f} '
                               f'bigger than initial (+ 5% deviation) {init_metric:.3f}')
-                return self.init_chain
+                # TODO заменить обратно на self.init_chain
+                return tuned_chain
 
 
 def _greater_is_better(target, loss_function, loss_params) -> bool:

@@ -45,8 +45,8 @@ def make_forecast_with_tuning(chain, train_input, predict_input, task):
     chain_tuner = ChainTuner(chain=chain, task=task,
                              iterations=10)
     chain = chain_tuner.tune_chain(input_data=train_input,
-                                   loss_function=mean_squared_error,
-                                   loss_params={'squared': False})
+                                   loss_function=mean_absolute_error,
+                                   loss_params=None)
 
     # Fit chain on the entire train data
     chain.fit_from_scratch(train_input)
