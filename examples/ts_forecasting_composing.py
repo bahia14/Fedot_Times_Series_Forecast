@@ -45,16 +45,6 @@ def get_source_chain():
     return chain
 
 
-def display_chain_info(chain):
-    """ Function print info about chain """
-
-    print('\nObtained chain:')
-    for node in chain.nodes:
-        print(f'{node.operation.operation_type}, params: {node.custom_params}')
-    depth = int(chain.depth)
-    print(f'Chain depth {depth}\n')
-
-
 def get_available_operations():
     """ Function returns available operations for primary and secondary nodes """
     primary_operations = ['lagged', 'smoothing', 'gaussian_filter', 'ar']
@@ -164,11 +154,14 @@ def fit_predict_for_chain(chain, train_input, predict_input):
 
 
 def run_ts_forecasting_problem(forecast_length=50,
-                               with_visualisation=True) -> None:
+                               with_visualisation=True,
+                               cv_folds=None) -> None:
     """ Function launch time series task with composing
 
     :param forecast_length: length of the forecast
     :param with_visualisation: is it needed to show the plots
+    :param cv_folds: is it needed apply cross validation and what number
+    of folds to use
     """
     file_path = '../cases/data/metocean/metocean_data_test.csv'
 
@@ -205,7 +198,7 @@ def run_ts_forecasting_problem(forecast_length=50,
         max_depth=8, pop_size=10, num_of_generations=15,
         crossover_prob=0.8, mutation_prob=0.8,
         max_lead_time=datetime.timedelta(minutes=10),
-        allow_single_operations=False)
+        allow_single_operations=False, cv_folds=cv_folds)
 
     mutation_types = [MutationTypesEnum.parameter_change, MutationTypesEnum.simple,
                       MutationTypesEnum.reduce]
@@ -236,7 +229,7 @@ def run_ts_forecasting_problem(forecast_length=50,
                               actual_values=time_series,
                               is_visualise=with_visualisation)
 
-    display_chain_info(obtained_chain)
+    obtained_chain.print_structure()
 
 
 if __name__ == '__main__':

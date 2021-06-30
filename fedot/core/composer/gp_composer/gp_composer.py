@@ -21,7 +21,8 @@ from fedot.core.data.data import InputData
 from fedot.core.data.data_split import train_test_data_setup
 from fedot.core.data.multi_modal import MultiModalData
 from fedot.core.log import Log, default_log
-from fedot.core.validation.composer_validation import table_cross_validation
+from fedot.core.validation.compose.tabular import table_cross_validation
+from fedot.core.validation.compose.time_series import ts_cross_validation
 from fedot.core.repository.operation_types_repository import OperationTypesRepository, get_operations_for_task
 from fedot.core.repository.quality_metrics_repository import ClassificationMetricsEnum, MetricsRepository, \
     RegressionMetricsEnum, MetricsEnum
@@ -121,11 +122,7 @@ class GPComposer(Composer):
             raise AttributeError(f'Optimiser for chain composition is not defined')
 
         if self.composer_requirements.cv_folds is not None:
-            if isinstance(data, MultiModalData):
-                raise NotImplementedError('Cross-validation is not supported for multi-modal data')
-            self.log.info("KFolds cross validation for chain composing was applied.")
-            metric_function_for_nodes = partial(table_cross_validation, data,
-                                                self.composer_requirements.cv_folds, self.metrics)
+            metric_function_for_nodes = self._cv_validation_metric_build(data)
         else:
             self.log.info("Hold out validation for chain composing was applied.")
             split_ratio = sample_split_ratio_for_tasks[data.task.task_type]
@@ -146,6 +143,23 @@ class GPComposer(Composer):
         if is_tune:
             self.tune_chain(best_chain, data, self.composer_requirements.max_lead_time)
         return best_chain
+
+    def _cv_validation_metric_build(self, data):
+        """ Prepare function for metric evaluation based on task """
+        if isinstance(data, MultiModalData):
+            raise NotImplementedError('Cross-validation is not supported for multi-modal data')
+        task = data.task.task_type
+        if task is TaskTypesEnum.ts_forecasting:
+            # Perform time series cross validation
+            self.log.info("Time series cross validation for chain composing was applied.")
+            metric_function_for_nodes = partial(ts_cross_validation, data,
+                                                self.composer_requirements.cv_folds, self.metrics)
+        else:
+            self.log.info("KFolds cross validation for chain composing was applied.")
+            metric_function_for_nodes = partial(table_cross_validation, data,
+                                                self.composer_requirements.cv_folds, self.metrics)
+
+        return metric_function_for_nodes
 
     def composer_metric(self, metrics,
                         train_data: Union[InputData, MultiModalData],
